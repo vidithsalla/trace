@@ -1,6 +1,8 @@
-# Trace - Grounded Legal RAG with Citation Validation
+# Trace - Sovereign Discovery Copilot
 
-A production-grade retrieval-augmented generation pipeline for legal document analysis, featuring hybrid search, deterministic citation validation, and matter-scoped evidence isolation.
+A production-grade document analysis system with grounded AI workflows for legal discovery-style evidence review. Trace ingests matter-scoped documents, builds a searchable evidence corpus, and runs structured AI workflows that must cite and validate source material before results are trusted.
+
+The project is designed as a production-style monorepo rather than a chatbot demo: it includes authentication, matter isolation, async ingestion, hybrid retrieval, citation validation, audit trails, exports, seed data, and regression tests.
 
 ![Python 3.12](https://img.shields.io/badge/Python-3.12-blue)
 ![Next.js 15](https://img.shields.io/badge/Next.js-15-black)
@@ -9,24 +11,40 @@ A production-grade retrieval-augmented generation pipeline for legal document an
 
 ## What This Project Does
 
-Trace ingests legal documents across PDF, DOCX, XLSX, CSV, TXT, and image inputs, then parses them into page-aware chunks and indexes them in PostgreSQL with pgvector. Users search the corpus through hybrid retrieval: Postgres full-text search, vector similarity, and reciprocal-rank fusion. AI workflows generate grounded answers, chronologies, entity profiles, contradiction reports, and issue memos, with material claims validated against source text. Every document, chunk, query, AI run, citation, export, and audit record is scoped to one matter.
+Trace lets users upload and analyze evidence within isolated legal matters. It parses files into page-aware chunks, indexes them with PostgreSQL full-text search and pgvector embeddings, retrieves relevant evidence, and runs grounded workflows for Q&A, chronologies, entities, contradictions, and issue memos.
 
-## Why This Is Not A Toy RAG App
+Every material AI output is tied back to source documents through validated citations. If the system cannot validate evidence for an answer, it returns insufficient evidence rather than presenting unsupported claims.
 
-Trace treats retrieval, grounding, access control, and evaluation as first-class system concerns. The core loop is not "send documents to a chatbot"; it is upload, parse, chunk, embed, retrieve, assemble evidence, generate structured output, validate citations, persist AI runs, expose audit records, and link every material answer back to source pages.
+## Why This Is Not A Toy AI Project
+
+- **Hybrid retrieval, not simple vector search**: Search combines Postgres full-text search, pgvector similarity, metadata filters, and reciprocal-rank fusion.
+- **Deterministic citation validation**: LLM citations are checked against stored source chunks; hallucinated quotes are not surfaced as trusted evidence.
+- **Matter-scoped isolation**: Documents, chunks, retrieval results, AI runs, citations, exports, and audit logs are all scoped to exactly one matter.
+- **Full evidence pipeline**: The system implements ingestion, parsing, chunking, embedding, retrieval, evidence assembly, model execution, validation, persistence, and viewer deep links.
+- **Workflow persistence and auditability**: AI runs, citations, chronology events, memos, exports, and audit records are persisted rather than treated as disposable chat messages.
+- **Local-first but production-shaped**: The default stack runs without a GPU or external LLM, while model and embedding providers are abstracted for private/self-hosted deployment.
 
 ## Key Technical Highlights
 
-- **Hybrid Retrieval with RRF**: Combines lexical search using Postgres `tsvector` with vector search using pgvector cosine similarity, merged through reciprocal-rank fusion. The default local provider is deterministic hash embeddings for lightweight development; enabling `TRACE_EMBEDDING_PROVIDER=sentence_transformer` adds semantic recall with a CPU-friendly sentence-transformer model.
-- **Deterministic Citation Validation**: Post-generation validation cross-references every LLM citation against source chunks. Quoted text must exist in source material. Zero valid citations returns insufficient evidence; one citation returns low confidence; hallucinated references are not surfaced as trusted evidence.
-- **Matter-Scoped Isolation**: Every chunk, query, AI run, citation, export, and audit row belongs to exactly one matter. Matter isolation is enforced through route guards, service checks, SQL filters, citation validation, and regression tests.
-- **6 AI Workflows**: Grounded Q&A, chronology builder, entity summarizer, contradiction finder, issue memo generator, and citation checker use typed schemas, prompt templates, persistence, and audit coverage.
-- **Multi-Format Document Ingestion**: PDF via PyMuPDF, DOCX via python-docx, XLSX via openpyxl, CSV, TXT, and image/OCR hooks. Dramatiq and Redis run asynchronous ingestion with status lifecycle tracking.
-- **Evidence Trust Loop**: Search hit to source page to quote context to viewer deep-link. Citations from AI workflows can be verified from the source document page.
-- **Eval Harness**: 4 corpora, Acme plus 3 regression packs, cover concept coverage, citation validity, contradiction precision, chronology completeness, semantic embedding provider behavior, and memo section coverage. The API suite currently has 56 automated tests across 12 test files.
-- **Private Deployment Shape**: Model inference is abstracted behind `ModelClient`, with `MockModelClient` as the local default and `OpenAICompatibleModelClient` for private/self-hosted targets. Local development requires no GPU.
+- **Multi-format ingestion**: PDF, DOCX, XLSX, CSV, TXT, and image/OCR hooks with async processing through Dramatiq and Redis.
+- **Object storage boundary**: Multipart uploads stream to MinIO while computing SHA-256; raw bytes do not travel through Redis job payloads.
+- **Hybrid retrieval with RRF**: Lexical ranking and vector ranking are merged with reciprocal-rank fusion using `k=60`.
+- **Embedding provider abstraction**: Deterministic 384-dimensional hash embeddings are the default for lightweight CI and local development; `TRACE_EMBEDDING_PROVIDER=sentence_transformer` enables `sentence-transformers/all-MiniLM-L6-v2`.
+- **Grounded AI workflow layer**: Q&A, chronology, entity summaries, contradiction reports, issue memos, and citation checks use typed schemas, persistence, and validation.
+- **Evidence trust loop**: Search results and AI citations deep-link to source document pages with local text context for verification.
+- **Regression coverage**: The API suite has 56 tests across auth, ingestion, retrieval, viewer, AI workflows, exports, evals, and semantic embedding provider behavior.
+
+## Key Design Decisions
+
+- **PostgreSQL + pgvector instead of a separate vector database**: Trace keeps relational records, matter scoping, lexical search, vector search, citations, and audit data in one transactional system. For this MVP scale, Postgres reduces operational complexity while still supporting vector similarity and full-text search.
+- **Hybrid retrieval instead of pure semantic retrieval**: Legal evidence often depends on exact names, dates, clauses, invoice IDs, and quoted language. Full-text search preserves exact-match precision, while vector search improves paraphrase recall. Reciprocal-rank fusion lets both signals contribute.
+- **Strict citation validation instead of trusting model output**: The model can propose an answer, but source validation determines whether it is safe to show. Quoted text must match source material, cited chunks must belong to the matter, and unsupported answers degrade to insufficient evidence or low confidence.
+- **Matter isolation at the data layer**: Matter boundaries are enforced through database relationships, route guards, service checks, query filters, citation validation, and tests. This prevents cross-matter leakage from becoming a UI-only concern.
+- **Mock model by default**: Local development uses `MockModelClient` so the stack can run on constrained hardware. The `OpenAICompatibleModelClient` keeps the production path open for self-hosted or private model endpoints.
 
 ## Architecture
+
+Trace is organized around three pipeline stages. Ingestion turns uploaded files into normalized pages, chunks, and embeddings. Retrieval searches the matter-scoped corpus through lexical and vector paths, then fuses ranked candidates. Grounding assembles evidence for AI workflows and validates returned citations before persisting user-visible results.
 
 ```mermaid
 flowchart LR
@@ -62,8 +80,6 @@ flowchart LR
     end
 ```
 
-Documents flow through ingestion: parse, chunk, embed, and index. Retrieval runs lexical and vector search paths in parallel, then merges results with reciprocal-rank fusion. AI workflows assemble evidence, generate structured output, and post-validate citations against source text before returning answers.
-
 ## Tech Stack
 
 | Layer | Technology |
@@ -79,7 +95,7 @@ Documents flow through ingestion: parse, chunk, embed, and index. Retrieval runs
 | Containerization | Docker Compose |
 | Testing | pytest, 56 tests, pnpm typecheck |
 
-## RAG Pipeline
+## Document Analysis Pipeline
 
 ### Ingestion
 
@@ -163,13 +179,26 @@ trace/
 9. Run contradiction analysis and generate an issue memo.
 10. Export an artifact and view the AI run record plus audit trail.
 
-## Design Decisions
+## What I Would Improve Next
 
-See [docs/pre_build_decisions.md](./docs/pre_build_decisions.md) for architecture rationale, including why pgvector was chosen over a dedicated vector database, why model inference is abstracted for private deployment, why citation validation is conservative, and why hybrid retrieval is used instead of pure vector search.
+- **Stronger embedding models**: `all-MiniLM-L6-v2` is a practical CPU-friendly baseline, but legal retrieval would benefit from stronger domain-aware or self-hosted embedding models.
+- **Reranking layer**: Add a cross-encoder or lightweight reranker after first-stage retrieval to improve ordering of evidence candidates.
+- **HNSW indexing**: Add pgvector HNSW indexes for larger corpora once the dataset size justifies approximate nearest-neighbor tuning.
+- **Larger eval datasets**: Expand beyond the current synthetic truth packs with more varied document formats, noisy OCR cases, and adversarial citation checks.
+- **More robust OCR path**: The OCR service boundary exists, but production usage would need more extensive scanned-document evaluation and operational hardening.
+- **Deployment hardening**: Add production deployment templates, secret management, backup/restore flows, and observability dashboards.
+
+## Design Docs
+
+- [docs/pre_build_decisions.md](./docs/pre_build_decisions.md): implementation defaults and architecture rationale.
+- [docs/schema_and_seeds.md](./docs/schema_and_seeds.md): database schema, seed data, and truth-map expectations.
+- [docs/architecture.md](./docs/architecture.md): system architecture and local topology.
+- [docs/local_dev.md](./docs/local_dev.md): local setup, Docker Compose usage, and lightweight development mode.
+- [ROADMAP.md](./ROADMAP.md): 13-phase execution roadmap and verification tracker.
 
 ## Extending To Full Product
 
-See [ROADMAP.md](./ROADMAP.md) for the complete 13-phase system design. Phases 0-12, from local platform through semantic retrieval upgrade, are implemented and verified. Phase 13 documents the future product launch path: public landing page, deployment options, invite-only access, and external-user onboarding.
+Trace is currently a public portfolio project and production-style local system. Phase 13 in [ROADMAP.md](./ROADMAP.md) documents future product launch work: public landing page, deployment options, invite-only access, and external-user onboarding.
 
 ## Roadmap Overview
 
