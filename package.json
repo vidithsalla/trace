@@ -1,0 +1,11 @@
+{
+  "name": "trace",
+  "private": true,
+  "packageManager": "pnpm@10.7.1",
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "build:web": "pnpm --filter web build",
+    "lint:web": "pnpm --filter web lint",
+    "typecheck:web": "pnpm --filter web typecheck"
+  }
+}

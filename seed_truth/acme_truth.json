@@ -1,0 +1,92 @@
+{
+  "product_name": "Trace",
+  "product_full_name": "Trace - Sovereign Discovery Copilot",
+  "matter_name": "Acme Industrial v. Northshore Supply",
+  "entities": [
+    {
+      "canonical_name": "Jane Mercer",
+      "aliases": ["J. Mercer"]
+    },
+    {
+      "canonical_name": "Priya Shah",
+      "aliases": []
+    },
+    {
+      "canonical_name": "Northshore Supply LLC",
+      "aliases": ["Northshore", "NS Supply"]
+    },
+    {
+      "canonical_name": "Acme Industrial Systems",
+      "aliases": ["Acme", "Acme Industrial"]
+    },
+    {
+      "canonical_name": "Project Falcon",
+      "aliases": ["Project Falcon Upgrade"]
+    },
+    {
+      "canonical_name": "Compressor Unit 7A",
+      "aliases": ["Unit 7A", "7A"]
+    }
+  ],
+  "key_events": [
+    {
+      "title": "Internal defect concern raised",
+      "date": "2024-03-12"
+    },
+    {
+      "title": "Formal notice letter sent",
+      "date": "2024-03-18"
+    },
+    {
+      "title": "Payment approval discussed",
+      "date": "2024-03-20"
+    }
+  ],
+  "known_contradictions": [
+    {
+      "topic": "notice timing",
+      "claim_a": "Notice was sent on March 18, 2024.",
+      "claim_b": "Notice was late or incomplete."
+    },
+    {
+      "topic": "payment approval authority",
+      "claim_a": "Priya Shah approved payment.",
+      "claim_b": "Approval remained conditional."
+    },
+    {
+      "topic": "defect knowledge",
+      "claim_a": "Northshore knew of the defect risk before shipment.",
+      "claim_b": "Northshore denied prior knowledge."
+    }
+  ],
+  "golden_questions": [
+    {
+      "question": "What evidence suggests Northshore knew of the defect before shipment?",
+      "must_include": ["defect", "Northshore", "shipment"],
+      "expected_document_names": ["Seed Document 1"]
+    },
+    {
+      "question": "Who appears to have authority over invoice approval?",
+      "must_include": ["Priya Shah", "conditional", "approval"],
+      "expected_document_names": ["Seed Document 2"]
+    },
+    {
+      "question": "What conflicts exist regarding when notice was sent?",
+      "must_include": ["notice", "March 18, 2024"],
+      "expected_document_names": ["Seed Document 3"]
+    }
+  ],
+  "expected_source_documents": [
+    "Seed Document 1",
+    "Seed Document 2",
+    "Seed Document 3",
+    "Seed Document 4",
+    "Seed Document 5",
+    "Seed Document 6",
+    "Seed Document 7",
+    "Seed Document 8",
+    "Seed Document 9",
+    "Seed Document 10",
+    "Seed Document 11"
+  ]
+}

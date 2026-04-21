@@ -1,0 +1,23 @@
+[project]
+name = "trace-worker"
+version = "0.1.0"
+description = "Trace background workers"
+requires-python = ">=3.12"
+dependencies = [
+  "boto3>=1.37.0",
+  "dramatiq[redis]>=1.17.0",
+  "openpyxl>=3.1.5",
+  "pgvector>=0.3.6",
+  "pydantic-settings>=2.7.0",
+  "pymupdf>=1.25.0",
+  "psycopg[binary]>=3.2.0",
+  "python-docx>=1.1.2",
+  "redis>=5.2.1",
+  "sqlalchemy>=2.0.36",
+  "structlog>=24.4.0"
+]
+
+[project.optional-dependencies]
+semantic = [
+  "sentence-transformers>=3.4.0"
+]

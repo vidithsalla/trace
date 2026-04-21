@@ -1,0 +1,27 @@
+services:
+  api:
+    environment:
+      TRACE_OCR_PROVIDER: http_stub
+      TRACE_OCR_BASE_URL: ${TRACE_OCR_BASE_URL:-http://ocr:8010}
+    depends_on:
+      ocr:
+        condition: service_healthy
+
+  worker:
+    environment:
+      TRACE_OCR_PROVIDER: http_stub
+      TRACE_OCR_BASE_URL: ${TRACE_OCR_BASE_URL:-http://ocr:8010}
+    depends_on:
+      ocr:
+        condition: service_healthy
+
+  ocr:
+    image: python:3.12-slim
+    command: python -m http.server 8010
+    ports:
+      - "8010:8010"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8010')\" >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10

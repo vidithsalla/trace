@@ -1,0 +1,21 @@
+services:
+  api:
+    environment:
+      TRACE_MODEL_PROVIDER: openai_compatible
+      TRACE_MODEL_NAME: ${TRACE_MODEL_NAME:-trace-placeholder-model}
+      TRACE_MODEL_BASE_URL: ${TRACE_MODEL_BASE_URL:-http://vllm:8001/v1}
+    depends_on:
+      vllm:
+        condition: service_healthy
+
+  vllm:
+    build:
+      context: ../..
+      dockerfile: infra/docker/mock-vllm.Dockerfile
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8001/health')\" >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10

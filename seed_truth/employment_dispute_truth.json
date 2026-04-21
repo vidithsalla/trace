@@ -1,0 +1,69 @@
+{
+  "product_name": "Trace",
+  "product_full_name": "Trace - Sovereign Discovery Copilot",
+  "corpus_id": "employment_dispute",
+  "corpus_type": "static_regression",
+  "matter_name": "Benton v. Lakeside Analytics",
+  "description": "Lightweight employment dispute truth pack for Trace regression breadth.",
+  "documents": [
+    {
+      "name": "Performance Review Email",
+      "text": "2024-01-12 Manager Elena Park emailed Marcus Benton that his quarterly performance was meeting expectations and that the Atlas rollout was on schedule."
+    },
+    {
+      "name": "HR Complaint Intake",
+      "text": "2024-01-19 Marcus Benton reported to HR partner Theo Grant that he was being excluded from Atlas planning meetings after raising overtime concerns."
+    },
+    {
+      "name": "Termination Memo",
+      "text": "2024-02-02 Lakeside Analytics terminated Marcus Benton for alleged missed milestones, even though the prior review said the Atlas rollout was on schedule."
+    },
+    {
+      "name": "Slack Export",
+      "text": "2024-01-25 Elena Park wrote that Marcus Benton was becoming a problem after his overtime complaint and that leadership should revisit his role."
+    }
+  ],
+  "entities": [
+    { "canonical_name": "Marcus Benton", "aliases": ["M. Benton"] },
+    { "canonical_name": "Lakeside Analytics", "aliases": ["Lakeside"] },
+    { "canonical_name": "Elena Park", "aliases": [] },
+    { "canonical_name": "Theo Grant", "aliases": [] },
+    { "canonical_name": "Atlas rollout", "aliases": ["Atlas"] }
+  ],
+  "key_events": [
+    { "title": "Positive performance review", "date": "2024-01-12" },
+    { "title": "Overtime complaint submitted to HR", "date": "2024-01-19" },
+    { "title": "Termination decision", "date": "2024-02-02" }
+  ],
+  "known_contradictions": [
+    {
+      "topic": "performance rationale",
+      "claim_a": "Marcus Benton was meeting expectations and the Atlas rollout was on schedule.",
+      "claim_b": "Lakeside Analytics terminated Marcus Benton for alleged missed milestones."
+    }
+  ],
+  "ambiguities": [
+    {
+      "topic": "retaliatory motive",
+      "notes": "The Slack export suggests timing and motive but does not alone prove causation."
+    }
+  ],
+  "golden_questions": [
+    {
+      "question": "What evidence supports Marcus Benton's retaliation theory?",
+      "must_include": ["overtime", "complaint", "terminated"],
+      "expected_document_names": ["HR Complaint Intake", "Slack Export", "Termination Memo"]
+    },
+    {
+      "question": "What conflicts exist in the performance rationale?",
+      "must_include": ["meeting expectations", "missed milestones"],
+      "expected_document_names": ["Performance Review Email", "Termination Memo"]
+    }
+  ],
+  "memo_topics": [
+    {
+      "issue": "Whether Lakeside terminated Marcus Benton for performance or retaliation",
+      "required_sections": ["issue", "answer_in_brief", "supporting_facts", "contrary_facts", "gaps", "next_documents_to_review"]
+    }
+  ]
+}

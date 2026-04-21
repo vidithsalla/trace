@@ -1,0 +1,69 @@
+{
+  "product_name": "Trace",
+  "product_full_name": "Trace - Sovereign Discovery Copilot",
+  "corpus_id": "internal_investigation",
+  "corpus_type": "static_regression",
+  "matter_name": "HelioTech Internal Investigation",
+  "description": "Lightweight internal investigation truth pack focused on witnesses, entities, chronology, and inconsistency handling.",
+  "documents": [
+    {
+      "name": "Hotline Report",
+      "text": "2024-04-03 Anonymous hotline report alleged that procurement lead Dana Cho steered HelioTech vendor work to Meridian Labs without review."
+    },
+    {
+      "name": "Witness Interview - Omar Reed",
+      "text": "2024-04-08 Omar Reed said Dana Cho asked him to skip the normal vendor scoring process for Meridian Labs because the launch timeline was tight."
+    },
+    {
+      "name": "Procurement Log",
+      "text": "2024-04-10 The procurement log showed Meridian Labs received emergency approval before the vendor scoring worksheet was completed."
+    },
+    {
+      "name": "Dana Cho Statement",
+      "text": "2024-04-12 Dana Cho denied bypassing review and stated that Meridian Labs was selected only after standard scoring was complete."
+    }
+  ],
+  "entities": [
+    { "canonical_name": "Dana Cho", "aliases": [] },
+    { "canonical_name": "Omar Reed", "aliases": [] },
+    { "canonical_name": "HelioTech", "aliases": [] },
+    { "canonical_name": "Meridian Labs", "aliases": ["Meridian"] },
+    { "canonical_name": "vendor scoring worksheet", "aliases": ["vendor scoring"] }
+  ],
+  "key_events": [
+    { "title": "Hotline allegation received", "date": "2024-04-03" },
+    { "title": "Witness interview describes skipped scoring", "date": "2024-04-08" },
+    { "title": "Dana Cho denies bypassing review", "date": "2024-04-12" }
+  ],
+  "known_contradictions": [
+    {
+      "topic": "vendor review bypass",
+      "claim_a": "Omar Reed said Dana Cho asked him to skip normal vendor scoring.",
+      "claim_b": "Dana Cho denied bypassing review and said scoring was complete first."
+    }
+  ],
+  "ambiguities": [
+    {
+      "topic": "emergency approval authority",
+      "notes": "The procurement log confirms emergency approval timing but does not identify who authorized it."
+    }
+  ],
+  "golden_questions": [
+    {
+      "question": "Which witness supports the claim that vendor scoring was skipped?",
+      "must_include": ["Omar Reed", "skip", "vendor scoring"],
+      "expected_document_names": ["Witness Interview - Omar Reed"]
+    },
+    {
+      "question": "What evidence conflicts with Dana Cho's statement?",
+      "must_include": ["emergency approval", "scoring", "denied"],
+      "expected_document_names": ["Procurement Log", "Dana Cho Statement"]
+    }
+  ],
+  "memo_topics": [
+    {
+      "issue": "Whether vendor review was bypassed for Meridian Labs",
+      "required_sections": ["issue", "answer_in_brief", "supporting_facts", "contrary_facts", "gaps", "next_documents_to_review"]
+    }
+  ]
+}

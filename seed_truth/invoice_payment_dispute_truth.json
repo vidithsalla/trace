@@ -1,0 +1,69 @@
+{
+  "product_name": "Trace",
+  "product_full_name": "Trace - Sovereign Discovery Copilot",
+  "corpus_id": "invoice_payment_dispute",
+  "corpus_type": "static_regression",
+  "matter_name": "Ridgeway Components v. Solace Retail",
+  "description": "Lightweight invoice/payment dispute truth pack for approval authority, invoice timing, and conditional payment regressions.",
+  "documents": [
+    {
+      "name": "Invoice 4481",
+      "text": "2024-05-01 Ridgeway Components issued Invoice 4481 to Solace Retail for the North Pier fixture shipment with net 30 payment terms."
+    },
+    {
+      "name": "Approval Email",
+      "text": "2024-05-06 Finance director Priya Nair approved payment for Invoice 4481 subject to receiving signed delivery confirmation."
+    },
+    {
+      "name": "Delivery Confirmation",
+      "text": "2024-05-09 The warehouse record showed the North Pier fixture delivery was signed by Solace receiving clerk Jonah Mills."
+    },
+    {
+      "name": "Payment Hold Notice",
+      "text": "2024-05-20 Solace Retail placed Invoice 4481 on hold, claiming payment authority was never final because the delivery confirmation was disputed."
+    }
+  ],
+  "entities": [
+    { "canonical_name": "Ridgeway Components", "aliases": ["Ridgeway"] },
+    { "canonical_name": "Solace Retail", "aliases": ["Solace"] },
+    { "canonical_name": "Priya Nair", "aliases": [] },
+    { "canonical_name": "Jonah Mills", "aliases": [] },
+    { "canonical_name": "Invoice 4481", "aliases": [] }
+  ],
+  "key_events": [
+    { "title": "Invoice issued", "date": "2024-05-01" },
+    { "title": "Conditional approval email sent", "date": "2024-05-06" },
+    { "title": "Payment hold notice sent", "date": "2024-05-20" }
+  ],
+  "known_contradictions": [
+    {
+      "topic": "payment approval authority",
+      "claim_a": "Priya Nair approved payment for Invoice 4481.",
+      "claim_b": "Solace Retail claimed payment authority was never final."
+    }
+  ],
+  "ambiguities": [
+    {
+      "topic": "delivery confirmation dispute",
+      "notes": "The delivery confirmation is signed, but the payment hold notice says the confirmation was disputed."
+    }
+  ],
+  "golden_questions": [
+    {
+      "question": "Was payment approval final or conditional?",
+      "must_include": ["approved", "subject to", "delivery confirmation"],
+      "expected_document_names": ["Approval Email", "Delivery Confirmation"]
+    },
+    {
+      "question": "Why did Solace place Invoice 4481 on hold?",
+      "must_include": ["hold", "payment authority", "disputed"],
+      "expected_document_names": ["Payment Hold Notice"]
+    }
+  ],
+  "memo_topics": [
+    {
+      "issue": "Whether Solace had final payment approval authority for Invoice 4481",
+      "required_sections": ["issue", "answer_in_brief", "supporting_facts", "contrary_facts", "gaps", "next_documents_to_review"]
+    }
+  ]
+}
