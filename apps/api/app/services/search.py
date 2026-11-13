@@ -10,7 +10,6 @@ from app.models.domain import Document, DocumentChunk
 from app.schemas.search import SearchRequest, SearchResponse, SearchResult
 from app.services.embeddings import cosine_similarity, get_embedding_client
 
-
 TOKEN_RE = re.compile(r"[a-z0-9]+")
 RRF_K = 60
 

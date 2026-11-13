@@ -10,7 +10,15 @@ from app.core.config import settings
 from app.core.security import hash_password
 from app.db.session import SessionLocal
 from app.main import app
-from app.models.domain import AuditLog, Document, IngestJob, Matter, MatterMember, Organization, User
+from app.models.domain import (
+    AuditLog,
+    Document,
+    IngestJob,
+    Matter,
+    MatterMember,
+    Organization,
+    User,
+)
 from app.services.storage import storage_service
 
 

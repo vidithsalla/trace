@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API tests and lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: trace
+          POSTGRES_USER: trace
+          POSTGRES_PASSWORD: trace
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U trace -d trace"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      TRACE_ENV: test
+      TRACE_POSTGRES_HOST: localhost
+      TRACE_REDIS_URL: redis://localhost:6379/0
+      TRACE_STORAGE_BACKEND: filesystem
+      TRACE_STORAGE_ROOT: ${{ github.workspace }}/.ci-objects
+      TRACE_MODEL_PROVIDER: mock
+      TRACE_EMBEDDING_PROVIDER: hash
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install uv (pinned)
+        run: pip install uv==0.13.7
+      - name: Install locked dependencies
+        run: uv sync --frozen --no-install-project
+      - name: Lint
+        run: uv run ruff check app
+      - name: Migrate
+        run: uv run alembic upgrade head
+      - name: Test
+        run: uv run pytest -q -p no:warnings
+
+  web:
+    name: Web typecheck and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Enable pinned pnpm
+        run: corepack enable
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm --filter web typecheck
+      - name: Build
+        run: pnpm --filter web build

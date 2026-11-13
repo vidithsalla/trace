@@ -1,5 +1,5 @@
-from itsdangerous import BadSignature, URLSafeSerializer
 from argon2 import PasswordHasher
+from itsdangerous import BadSignature, URLSafeSerializer
 
 from app.core.config import settings
 

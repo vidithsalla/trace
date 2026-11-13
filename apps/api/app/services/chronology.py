@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import csv
 import re
-from io import BytesIO
-from io import StringIO
+from io import BytesIO, StringIO
 from uuid import UUID
 
 from docx import Document as DocxDocument
@@ -12,7 +11,6 @@ from sqlalchemy.orm import Session
 
 from app.models.domain import Document, Event, EventCitation
 from app.schemas.workflow import ChronologyEvent, ChronologyEventUpdate
-
 
 SPACE_RE = re.compile(r"\s+")
 

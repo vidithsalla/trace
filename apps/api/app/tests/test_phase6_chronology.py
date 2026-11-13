@@ -23,7 +23,12 @@ from app.models.domain import (
     Organization,
     User,
 )
-from app.schemas.workflow import ChronologyEvent, ChronologyRequest, ChronologyResponse, CitationPayload
+from app.schemas.workflow import (
+    ChronologyEvent,
+    ChronologyRequest,
+    ChronologyResponse,
+    CitationPayload,
+)
 from app.services.mock_model_client import MockModelClient
 from app.services.model_client import EvidenceItem
 from app.services.workflows import run_chronology_builder

@@ -5,10 +5,10 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-RUN pip install uv
+RUN pip install --no-cache-dir uv==0.13.7
 
-COPY apps/api/pyproject.toml /app/pyproject.toml
-RUN uv sync --frozen || uv sync
+COPY apps/api/pyproject.toml apps/api/uv.lock /app/
+RUN uv sync --frozen --no-install-project
 
 COPY apps/api/ /app/
 COPY seed_data/ /app/seed_data/

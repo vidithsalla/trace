@@ -27,7 +27,7 @@ Every material AI output is tied back to source documents through validated cita
 ## Key Technical Highlights
 
 - **Multi-format ingestion**: PDF, DOCX, XLSX, CSV, TXT, and image/OCR hooks with async processing through Dramatiq and Redis.
-- **Object storage boundary**: Multipart uploads stream to MinIO while computing SHA-256; raw bytes do not travel through Redis job payloads.
+- **Object storage boundary**: Multipart uploads stream to local object storage while computing SHA-256; raw bytes do not travel through Redis job payloads.
 - **Hybrid retrieval with RRF**: Lexical ranking and vector ranking are merged with reciprocal-rank fusion using `k=60`.
 - **Embedding provider abstraction**: Deterministic 384-dimensional hash embeddings are the default for lightweight CI and local development; `TRACE_EMBEDDING_PROVIDER=sentence_transformer` enables `sentence-transformers/all-MiniLM-L6-v2`.
 - **Grounded AI workflow layer**: Q&A, chronology, entity summaries, contradiction reports, issue memos, and citation checks use typed schemas, persistence, and validation.
@@ -54,7 +54,7 @@ flowchart LR
 
     subgraph Ingestion
         A --> U[Upload]
-        U --> M[MinIO]
+        U --> M[Object storage]
         U --> Q[Dramatiq Queue]
         Q --> WK[Worker]
         WK --> P[Parser]
@@ -87,7 +87,7 @@ flowchart LR
 | Frontend | Next.js 15, TypeScript |
 | Backend | FastAPI, Python 3.12 |
 | Database | PostgreSQL 16 + pgvector |
-| Object Storage | MinIO, S3-compatible |
+| Object Storage | Local filesystem volume (default) or S3-compatible |
 | Task Queue | Dramatiq + Redis 7 |
 | Search | Postgres FTS + pgvector cosine + RRF |
 | Embeddings | Default hash provider, optional sentence-transformer provider |
@@ -99,7 +99,7 @@ flowchart LR
 
 ### Ingestion
 
-Multipart upload streams files to MinIO in bounded chunks while computing SHA-256. The API enqueues a Dramatiq job with the document ID only, so raw bytes do not travel through Redis. The worker parses each file with format-specific parsers, persists page-level raw and normalized text, chunks at roughly 800 tokens with 150-token overlap while preserving page boundaries, embeds each chunk, and stores vectors in pgvector.
+Multipart upload streams files to object storage in bounded chunks while computing SHA-256. The API enqueues a Dramatiq job with the document ID only, so raw bytes do not travel through Redis. The worker parses each file with format-specific parsers, persists page-level raw and normalized text, chunks at roughly 800 tokens with 150-token overlap while preserving page boundaries, embeds each chunk, and stores vectors in pgvector.
 
 ### Retrieval
 
@@ -148,7 +148,7 @@ trace/
 ## Quick Start
 
 1. Clone the repo and copy `.env.example` to `.env`.
-2. Run `make up` to boot the core stack: web, API, worker, Postgres, Redis, and MinIO.
+2. Run `make up` to boot the core stack: web, API, worker, Postgres and Redis.
 3. Run `make seed` to load the Acme Industrial v. Northshore Supply demo matter.
 4. Open `http://localhost:3000` and sign in with seeded credentials from `docs/local_dev.md`.
 5. Run `make eval` to execute the Acme eval harness against the seeded data.

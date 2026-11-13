@@ -15,10 +15,10 @@ from app.schemas.entity import (
 )
 from app.schemas.search import SearchRequest, SearchResponse
 from app.schemas.workflow import (
-    ChronologyRequest,
-    ChronologyResponse,
     ChronologyEvent,
     ChronologyEventUpdate,
+    ChronologyRequest,
+    ChronologyResponse,
     ContradictionRequest,
     ContradictionResponse,
     GroundedQARequest,
@@ -28,7 +28,11 @@ from app.schemas.workflow import (
     MemoUpdateRequest,
 )
 from app.services.audit import record_audit_event
-from app.services.chronology import event_to_payload, list_chronology_events, update_chronology_event
+from app.services.chronology import (
+    event_to_payload,
+    list_chronology_events,
+    update_chronology_event,
+)
 from app.services.entities import (
     add_entity_alias,
     entity_to_detail,

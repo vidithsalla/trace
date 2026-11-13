@@ -41,6 +41,11 @@ dev = [
 line-length = 100
 target-version = "py312"
 
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B"]
+# B008: FastAPI's Depends()/File() defaults are the framework idiom, not a bug.
+ignore = ["B008"]
+
 [tool.pytest.ini_options]
 testpaths = ["app/tests"]
 pythonpath = ["."]

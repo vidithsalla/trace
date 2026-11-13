@@ -14,7 +14,6 @@ Useful URLs:
 - API docs: `http://localhost:8000/docs`
 - Readiness: `http://localhost:8000/health/ready`
 - Metrics: `http://localhost:8000/metrics`
-- MinIO console: `http://localhost:9001`
 
 Demo credentials after seeding:
 

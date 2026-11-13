@@ -23,7 +23,6 @@ from app.services.entities import extract_entities_for_matter
 from app.services.ingestion import process_document
 from app.services.storage import storage_service
 
-
 SEED_TEXTS = [
     (
         "2024-03-05 Jane Mercer logged a Project Falcon quality note stating Compressor Unit 7A "

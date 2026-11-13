@@ -9,7 +9,17 @@ from sqlalchemy.orm import Session
 from app.core.security import hash_password
 from app.db.session import SessionLocal
 from app.main import app
-from app.models.domain import AIRun, Citation, Document, DocumentChunk, DocumentPage, Matter, MatterMember, Organization, User
+from app.models.domain import (
+    AIRun,
+    Citation,
+    Document,
+    DocumentChunk,
+    DocumentPage,
+    Matter,
+    MatterMember,
+    Organization,
+    User,
+)
 from app.schemas.workflow import CitationPayload, GroundedQARequest
 from app.services.citations import validate_citations
 from app.services.mock_model_client import MockModelClient

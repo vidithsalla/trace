@@ -1,8 +1,7 @@
 import json
 from collections.abc import Generator
 from pathlib import Path
-from uuid import UUID
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -29,13 +28,6 @@ from app.models.domain import (
 from app.scripts.seed_demo import SEED_TEXTS
 from app.services.evals import EvalRunner
 from app.services.storage import storage_service
-
-
-@pytest.fixture(autouse=True)
-def _reset_storage_client():
-    storage_service.client = None
-    yield
-    storage_service.client = None
 
 
 @pytest.fixture()

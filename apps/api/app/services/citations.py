@@ -10,7 +10,6 @@ from sqlalchemy.orm import Session
 from app.models.domain import Document, DocumentChunk, DocumentPage
 from app.schemas.workflow import CitationPayload
 
-
 SPACE_RE = re.compile(r"\s+")
 
 

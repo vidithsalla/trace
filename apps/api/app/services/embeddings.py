@@ -5,8 +5,8 @@ import importlib
 import math
 import re
 from collections.abc import Iterable
+from itertools import pairwise
 from typing import Any
-
 
 EMBEDDING_DIMENSION = 384
 TOKEN_RE = re.compile(r"[a-z0-9]+")
@@ -32,7 +32,7 @@ class LocalHashEmbeddingClient(EmbeddingClient):
     def _embed_one(self, text: str) -> list[float]:
         vector = [0.0] * self.dimension
         tokens = TOKEN_RE.findall(text.lower())
-        features = tokens + [f"{left}_{right}" for left, right in zip(tokens, tokens[1:])]
+        features = tokens + [f"{left}_{right}" for left, right in pairwise(tokens)]
 
         for feature in features:
             digest = hashlib.blake2b(feature.encode("utf-8"), digest_size=8).digest()
@@ -119,7 +119,7 @@ def cosine_similarity(left, right) -> float:
     right_values = list(right)
     if not left_values or not right_values:
         return 0.0
-    return sum(a * b for a, b in zip(left_values, right_values))
+    return sum(a * b for a, b in zip(left_values, right_values, strict=True))
 
 
 def get_embedding_client(

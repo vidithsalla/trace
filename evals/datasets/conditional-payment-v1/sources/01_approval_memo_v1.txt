@@ -1,0 +1,11 @@
+NORTHSHORE COMPONENTS - ACCOUNTS PAYABLE MEMO
+Date: March 18, 2026
+From: Dana Whitfield, Controller
+To: Accounts Payable
+
+Re: Invoice 7A (Halden Freight, $48,200.00)
+
+Invoice 7A is approved for payment subject to verification of delivery receipts by the
+receiving dock. Payment may be released once the receiving dock confirms the receipts in writing.
+
+Invoice 7B (Halden Freight, $12,900.00) is approved for payment without conditions.

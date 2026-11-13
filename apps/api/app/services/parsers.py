@@ -13,7 +13,6 @@ from openpyxl import load_workbook
 
 from app.services.ocr import OCRService, get_ocr_service
 
-
 WHITESPACE_RE = re.compile(r"[ \t\r\f\v]+")
 LINE_GAP_RE = re.compile(r"\n{3,}")
 

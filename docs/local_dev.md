@@ -25,7 +25,6 @@ This repo assumes an M1 MacBook Pro with 8 GB RAM may be memory-constrained. The
 4. API docs: `http://localhost:8000/docs`
 5. API readiness: `http://localhost:8000/health/ready`
 6. Web shell: `http://localhost:3000`
-7. MinIO console: `http://localhost:9001`
 
 ## Optional Add-ons
 
@@ -78,7 +77,7 @@ before setting `TRACE_EMBEDDING_PROVIDER=sentence_transformer`.
 - `OpenAICompatibleModelClient` is available for later self-hosted integration and optional local add-on use.
 - OCR remains part of the product architecture, but it is not in the default startup path.
 - The API container runs Alembic migrations at startup.
-- The MinIO bucket is initialized automatically by a one-shot `minio-init` service.
+- Uploaded files and exports are stored on the `object-data` Docker volume (`TRACE_STORAGE_BACKEND=filesystem`).
 
 ## Demo Credentials
 

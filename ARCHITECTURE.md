@@ -2,7 +2,7 @@
 
 Trace is a private, matter-scoped legal workflow system. The local monorepo contains `apps/web` for the Next.js 15 App Router UI, `apps/api` for the FastAPI domain/API layer, `apps/worker` for Dramatiq jobs, shared `packages/*`, service contract folders, Docker Compose infrastructure, raw seed data, and seed truth maps.
 
-The core runtime is intentionally lightweight by default: web, API, worker, Postgres with pgvector, Redis, and MinIO. Model serving and OCR remain product-critical, but local vLLM/OCR containers are optional add-ons so Apple Silicon 8 GB machines can run the app comfortably.
+The core runtime is intentionally lightweight by default: web, API, worker, Postgres with pgvector and Redis, plus a filesystem object-storage volume. Model serving and OCR remain product-critical, but local vLLM/OCR containers are optional add-ons so Apple Silicon 8 GB machines can run the app comfortably.
 
 Core invariants:
 

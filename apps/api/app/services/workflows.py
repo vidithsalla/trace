@@ -5,11 +5,12 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.domain import AIRun, Citation, Document, DocumentChunk, Matter, Memo
+from app.schemas.search import SearchRequest
 from app.schemas.workflow import (
-    CitationPayload,
     ChronologyEvent,
     ChronologyRequest,
     ChronologyResponse,
+    CitationPayload,
     ContradictionItem,
     ContradictionRequest,
     ContradictionResponse,
@@ -31,7 +32,6 @@ from app.services.mock_model_client import MockModelClient
 from app.services.model_client import EvidenceItem, MemoDraft, ModelClient, ModelClientError
 from app.services.openai_compatible_model_client import OpenAICompatibleModelClient
 from app.services.search import perform_search
-from app.schemas.search import SearchRequest
 
 
 def _top_chunks(db: Session, matter_id: UUID, limit: int = 3) -> list[tuple[DocumentChunk, Document]]:

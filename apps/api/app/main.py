@@ -1,13 +1,12 @@
 from time import perf_counter
 from uuid import uuid4
 
-from redis import Redis
-from sqlalchemy import text
-
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+from redis import Redis
+from sqlalchemy import text
 
 from app.api.router import api_router
 from app.core.config import settings
@@ -88,7 +87,7 @@ def readiness_check() -> dict[str, object]:
         checks["redis"] = f"error: {exc}"
 
     try:
-        storage_service._get_client().list_buckets()  # noqa: SLF001 - phase 0 readiness shortcut
+        storage_service.ping()
         checks["object_storage"] = "ok"
     except Exception as exc:  # pragma: no cover - defensive phase-0 readiness
         checks["object_storage"] = f"error: {exc}"

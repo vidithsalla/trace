@@ -20,8 +20,8 @@ from app.schemas.entity import (
 from app.schemas.workflow import CitationPayload
 from app.services.audit import record_audit_event
 from app.services.citations import build_viewer_url
-from app.services.model_client import EvidenceItem, ModelClient
 from app.services.mock_model_client import MockModelClient
+from app.services.model_client import EvidenceItem, ModelClient
 from app.services.openai_compatible_model_client import OpenAICompatibleModelClient
 
 

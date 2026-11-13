@@ -13,7 +13,6 @@ from app.services.entities import extract_entities_for_matter
 from app.services.parsers import ParsedPage, get_parser
 from app.services.storage import storage_service
 
-
 TARGET_CHUNK_TOKENS = 800
 CHUNK_OVERLAP_TOKENS = 150
 
@@ -100,7 +99,7 @@ def process_document(db: Session, document_id: UUID) -> None:
 
     chunk_drafts = chunk_pages(parse_result.pages)
     embeddings = get_embedding_client().embed_texts(chunk.text for chunk in chunk_drafts)
-    for chunk, embedding in zip(chunk_drafts, embeddings):
+    for chunk, embedding in zip(chunk_drafts, embeddings, strict=True):
         db.add(
             DocumentChunk(
                 document_id=document.id,

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-CORE_SERVICES = {"web", "api", "worker", "postgres", "redis", "minio", "minio-init"}
+CORE_SERVICES = {"web", "api", "worker", "postgres", "redis"}
 MODEL_SERVICES = {"api", "vllm"}
 OCR_SERVICES = {"api", "worker", "ocr"}
 

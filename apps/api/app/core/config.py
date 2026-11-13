@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Trace - Sovereign Discovery Copilot"
+    app_name: str = "Trace"
     env: str = "development"
     secret_key: str = "change-me"
     session_cookie: str = "trace_session"
@@ -16,10 +16,12 @@ class Settings(BaseSettings):
     postgres_user: str = "trace"
     postgres_password: str = "trace"
     redis_url: str = "redis://redis:6379/0"
-    minio_endpoint: str = "minio:9000"
-    minio_access_key: str = "minioadmin"
-    minio_secret_key: str = "minioadmin"
-    minio_bucket: str = "trace-documents"
+    storage_backend: str = "filesystem"  # filesystem | s3
+    storage_root: str = "/data/objects"
+    s3_endpoint_url: str | None = None
+    s3_access_key: str | None = None
+    s3_secret_key: str | None = None
+    s3_bucket: str = "trace-documents"
     max_upload_bytes: int = 25 * 1024 * 1024
     model_provider: str = "mock"
     model_name: str = "trace-mock-local"
@@ -41,9 +43,28 @@ class Settings(BaseSettings):
         )
 
 
+class UnsafeConfigurationError(RuntimeError):
+    pass
+
+
+def assert_safe_for_environment(config: Settings) -> None:
+    """Refuse to start outside development/test with demo-grade security settings."""
+    if config.env in {"development", "test"}:
+        return
+    problems = []
+    if config.secret_key in {"", "change-me"} or len(config.secret_key) < 32:
+        problems.append("TRACE_SECRET_KEY must be a random value of at least 32 characters")
+    if config.allow_insecure_demo_login:
+        problems.append("TRACE_ALLOW_INSECURE_DEMO_LOGIN must be false")
+    if problems:
+        raise UnsafeConfigurationError("; ".join(problems))
+
+
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    config = Settings()
+    assert_safe_for_environment(config)
+    return config
 
 
 settings = get_settings()

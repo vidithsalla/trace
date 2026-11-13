@@ -11,7 +11,15 @@ from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
 from app.db.session import SessionLocal
-from app.models.domain import Document, DocumentChunk, IngestJob, Matter, MatterMember, Organization, User
+from app.models.domain import (
+    Document,
+    DocumentChunk,
+    IngestJob,
+    Matter,
+    MatterMember,
+    Organization,
+    User,
+)
 from app.schemas.search import SearchRequest
 from app.services.ingestion import chunk_pages, process_document
 from app.services.parsers import ParsedPage, get_parser

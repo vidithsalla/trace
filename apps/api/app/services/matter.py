@@ -6,7 +6,6 @@ from sqlalchemy.orm import Session
 
 from app.models.domain import Matter, MatterMember, User
 
-
 WRITE_ROLES = {"admin", "attorney"}
 
 

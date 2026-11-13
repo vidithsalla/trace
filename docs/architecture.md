@@ -4,7 +4,7 @@ Trace is a full-stack RAG system for legal document analysis. It combines matter
 
 ## System Overview
 
-The system has three executable apps: a Next.js 15 frontend, a FastAPI backend, and a Dramatiq worker. PostgreSQL 16 with pgvector stores relational data and embeddings, Redis backs background jobs, and MinIO stores uploaded files plus generated artifacts. The API owns auth, sessions, RBAC, matter isolation, public route contracts, AI workflow orchestration, citation validation, and audit logging.
+The system has three executable apps: a Next.js 15 frontend, a FastAPI backend, and a Dramatiq worker. PostgreSQL 16 with pgvector stores relational data and embeddings, Redis backs background jobs, and a filesystem volume (or optional S3-compatible store) holds uploaded files plus generated artifacts. The API owns auth, sessions, RBAC, matter isolation, public route contracts, AI workflow orchestration, citation validation, and audit logging.
 
 ## Architecture Diagram
 
@@ -15,7 +15,7 @@ flowchart LR
 
     subgraph Storage
         DB[(PostgreSQL 16 + pgvector)]
-        MinIO[(MinIO Object Storage)]
+        MinIO[(Object Storage)]
         Redis[(Redis 7)]
     end
 
@@ -54,7 +54,7 @@ flowchart LR
 
 ### Ingestion
 
-Uploads stream to MinIO while the API computes SHA-256 and creates document plus ingest-job rows. The queue payload contains the document ID only. The worker fetches the object from MinIO, parses it, persists page records, creates chunks, embeds chunk text, stores vectors in pgvector, extracts lightweight entity candidates, updates ingest status, and records audit events.
+Uploads stream to object storage while the API computes SHA-256 and creates document plus ingest-job rows. The queue payload contains the document ID only. The worker fetches the object from storage, parses it, persists page records, creates chunks, embeds chunk text, stores vectors in pgvector, extracts lightweight entity candidates, updates ingest status, and records audit events.
 
 ### Parsing
 

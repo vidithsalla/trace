@@ -4,10 +4,10 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.deps import get_current_user, get_db, get_optional_current_user
 from app.core.security import create_session_token
+from app.models.domain import utcnow
 from app.schemas.auth import LoginRequest, SessionUser
 from app.services.audit import record_audit_event
 from app.services.auth import authenticate_user, find_user_by_email
-from app.models.domain import utcnow
 
 router = APIRouter()
 

@@ -8,7 +8,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.domain import Entity, Matter, Memo, User
-from app.schemas.workflow import ChronologyRequest, ContradictionRequest, GroundedQARequest, MemoCreateRequest
+from app.schemas.workflow import (
+    ChronologyRequest,
+    ContradictionRequest,
+    GroundedQARequest,
+    MemoCreateRequest,
+)
 from app.services.exports import create_completed_export
 from app.services.workflows import (
     run_chronology_builder,

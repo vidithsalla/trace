@@ -14,7 +14,6 @@ from app.services.contradictions import build_contradiction_evidence_pack
 from app.services.model_client import EvidenceItem, MemoDraft
 from app.services.search import perform_search
 
-
 REQUIRED_MEMO_SECTIONS = [
     "issue",
     "answer_in_brief",
