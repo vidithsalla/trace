@@ -32,7 +32,7 @@ from app.models.evidence import (
     SourceEmbedding,
     SourceSpan,
 )
-from app.services.embeddings import get_embedding_client
+from app.services.embeddings import LocalHashEmbeddingClient, get_embedding_client
 from app.services.storage import storage_service
 
 NORMALIZATION_VERSION = "nfc-ws-v1"
@@ -259,22 +259,30 @@ def publish_extraction(
     db.add_all(spans)
     db.flush()
 
-    embedder = get_embedding_client()
-    vectors = embedder.embed_texts(span.text for span in spans) if spans else []
-    profile_id = embedding_profile_id(embedder)
-    db.add_all(
-        SourceEmbedding(source_span_id=span.id, embedding_profile_id=profile_id,
-                        matter_id=span.matter_id, embedding=vector)
-        for span, vector in zip(spans, vectors, strict=True)
-    )
+    warnings_out = list(extraction.warnings)
+    embedders = [LocalHashEmbeddingClient()]
+    configured = get_embedding_client()
+    if embedding_profile_id(configured) != "hash-v1":
+        embedders.append(configured)
+    for embedder in embedders:
+        try:
+            write_embeddings(db, spans, embedder)
+        except Exception:  # noqa: BLE001 - semantic provider down must not block publication
+            if embedding_profile_id(embedder) == "hash-v1":
+                raise
+            warnings_out.append("SEMANTIC_EMBEDDING_UNAVAILABLE")
 
     if not spans:
-        extraction.warnings = [*extraction.warnings, "NO_TEXT_EXTRACTED"]
+        warnings_out.append("NO_TEXT_EXTRACTED")
+    extraction.warnings = warnings_out
     extraction.span_count = len(spans)
     extraction.state = "READY"
     extraction.published_at = utcnow()
     db.flush()
     _activate_version(db, version)
+    from app.services.change_control import on_version_published  # avoid import cycle
+
+    on_version_published(db, version, extraction.id)
     return extraction
 
 
@@ -300,9 +308,31 @@ def _activate_version(db: Session, version: DocumentVersion) -> None:
     db.flush()
 
 
+def write_embeddings(db: Session, spans: Sequence[SourceSpan], embedder) -> int:
+    """Embed spans with one profile. Skips spans that already have that profile."""
+    if not spans:
+        return 0
+    profile_id = embedding_profile_id(embedder)
+    have = set(db.scalars(select(SourceEmbedding.source_span_id).where(
+        SourceEmbedding.embedding_profile_id == profile_id,
+        SourceEmbedding.source_span_id.in_([span.id for span in spans]),
+    )))
+    todo = [span for span in spans if span.id not in have]
+    if not todo:
+        return 0
+    vectors = embedder.embed_texts(span.text for span in todo)
+    db.add_all(
+        SourceEmbedding(source_span_id=span.id, embedding_profile_id=profile_id,
+                        matter_id=span.matter_id, embedding=vector)
+        for span, vector in zip(todo, vectors, strict=True)
+    )
+    db.flush()
+    return len(todo)
+
+
 def embedding_profile_id(embedder) -> str:
     return getattr(embedder, "profile_id", None) or (
-        "minilm-l6-v2" if type(embedder).__name__ == "SentenceTransformerEmbeddingClient" else "hash-v1"
+        "hash-v1"
     )
 
 

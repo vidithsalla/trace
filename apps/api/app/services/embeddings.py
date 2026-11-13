@@ -20,6 +20,8 @@ class EmbeddingClient:
 
 
 class LocalHashEmbeddingClient(EmbeddingClient):
+    profile_id = "hash-v1"
+
     """Tiny deterministic embedding client for local development.
 
     It is not a semantic model, but it gives us stable pgvector-shaped vectors,
@@ -52,6 +54,8 @@ class SentenceTransformerEmbeddingClient(EmbeddingClient):
     The dependency and model are loaded lazily so the default lightweight
     development path never imports torch or downloads model weights.
     """
+
+    profile_id = "minilm-l6-v2"
 
     def __init__(self, model_name: str, model: Any | None = None) -> None:
         self.model_name = model_name
@@ -112,6 +116,43 @@ class SentenceTransformerEmbeddingClient(EmbeddingClient):
         return [value / norm for value in vector]
 
 
+class OllamaEmbeddingClient(EmbeddingClient):
+    """all-MiniLM-L6-v2 served by a local Ollama (OpenAI-compatible /v1/embeddings).
+
+    Separate profile id from the sentence-transformers runtime: different runtimes and weight
+    formats can produce slightly different vectors, so they are never mixed in one comparison.
+    """
+
+    profile_id = "minilm-l6-v2-ollama"
+    dimension = 384
+
+    def __init__(self, base_url: str, model_name: str, timeout: float = 60.0,
+                 transport: Any | None = None) -> None:
+        import httpx
+
+        self.model_name = model_name
+        self._http = httpx.Client(base_url=base_url.rstrip("/"), timeout=timeout,
+                                  transport=transport, follow_redirects=False)
+
+    def embed_texts(self, texts: Iterable[str]) -> list[list[float]]:
+        values = list(texts)
+        out: list[list[float]] = []
+        for start in range(0, len(values), 64):
+            batch = values[start:start + 64]
+            response = self._http.post("/embeddings", json={"model": self.model_name, "input": batch})
+            response.raise_for_status()
+            data = sorted(response.json()["data"], key=lambda row: row["index"])
+            if len(data) != len(batch):
+                raise RuntimeError("embedding provider returned a different number of vectors")
+            for row in data:
+                vector = [float(v) for v in row["embedding"]]
+                if len(vector) != self.dimension:
+                    raise RuntimeError(f"expected {self.dimension} dimensions, got {len(vector)}")
+                norm = math.sqrt(sum(v * v for v in vector)) or 1.0
+                out.append([v / norm for v in vector])
+        return out
+
+
 def cosine_similarity(left, right) -> float:
     if left is None or right is None:
         return 0.0
@@ -135,8 +176,10 @@ def get_embedding_client(
         return LocalHashEmbeddingClient()
     if selected_provider in {"sentence_transformer", "sentence-transformer", "semantic"}:
         return SentenceTransformerEmbeddingClient(selected_model)
+    if selected_provider == "ollama":
+        return OllamaEmbeddingClient(settings.embedding_base_url, settings.embedding_ollama_model)
 
     raise RuntimeError(
         "Unknown TRACE_EMBEDDING_PROVIDER "
-        f"'{selected_provider}'. Expected 'hash' or 'sentence_transformer'."
+        f"'{selected_provider}'. Expected 'hash', 'sentence_transformer' or 'ollama'."
     )

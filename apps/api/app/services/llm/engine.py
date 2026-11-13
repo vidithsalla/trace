@@ -13,6 +13,7 @@ from abc import ABC, abstractmethod
 from app.core.config import Settings
 from app.services.llm.client import (
     CallBudget,
+    CallRecord,
     ChatClient,
     ProviderConfig,
     validate_provider_config,
@@ -129,8 +130,12 @@ class MockClaimEngine(ClaimEngine):
     def __init__(self, model: str = "trace-mock-claims") -> None:
         self.model = model
 
-    def propose_claims(self, question, pack, budget):
+    def _record(self, budget: CallBudget, purpose: str) -> None:
         budget.take()
+        budget.records.append(CallRecord(purpose=purpose, status="ok", latency_ms=0, attempts=1))
+
+    def propose_claims(self, question, pack, budget):
+        self._record(budget, "propose_claims")
         terms = _keywords(question)
         scored = []
         for item in pack.items:
@@ -150,7 +155,7 @@ class MockClaimEngine(ClaimEngine):
         return ClaimProposal(answer_status="proposed", claims=[claim], abstention_reason=None)
 
     def assess_support(self, claim_text, pack, budget):
-        budget.take()
+        self._record(budget, "assess_support")
         claim_terms = _keywords(claim_text)
         claim_lower = claim_text.lower()
         relations = []

@@ -39,9 +39,20 @@ class Settings(BaseSettings):
     ocr_base_url: str = "http://ocr:8010"
     embedding_provider: str = "hash"
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_base_url: str = "http://host.docker.internal:11434/v1"
+    embedding_ollama_model: str = "all-minilm:l6-v2"
+    # lexical_v1 | hash_hybrid_baseline | semantic_exact_v2 | semantic_hybrid_v2 | auto
+    retrieval_profile: str = "auto"
+    analysis_inline: bool = False  # run analysis in the API process instead of the worker
+    code_commit: str = "unknown"
     allow_insecure_demo_login: bool = True
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     model_config = SettingsConfigDict(env_prefix="TRACE_", case_sensitive=False, env_file=".env")
+
+    @property
+    def secure_cookies(self) -> bool:
+        return self.env not in {"development", "test"}
 
     @property
     def database_url(self) -> str:

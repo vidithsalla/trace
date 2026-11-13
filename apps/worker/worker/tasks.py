@@ -4,6 +4,7 @@ import dramatiq
 from dramatiq.brokers.redis import RedisBroker
 
 from app.db.session import SessionLocal
+from app.services.analysis import execute_analysis
 from app.services.exports import process_export_job
 from app.services.ingestion import mark_ingest_failed, process_document
 from worker.settings import settings
@@ -36,3 +37,11 @@ def export_job(export_id: str) -> None:
         except Exception:
             db.rollback()
             raise
+
+
+@dramatiq.actor(queue_name="analysis", max_retries=0, time_limit=15 * 60 * 1000)
+def run_analysis(run_id: str) -> None:
+    # No automatic retries: a model call may already have happened, and re-running silently
+    # would multiply cost. execute_analysis marks the run FAILED with a typed error instead.
+    with SessionLocal() as db:
+        execute_analysis(db, UUID(run_id))

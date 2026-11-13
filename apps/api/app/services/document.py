@@ -24,6 +24,19 @@ def _ingest_document_message(document_id: str) -> None:  # pragma: no cover - AP
     raise RuntimeError("API process should not execute ingestion jobs")
 
 
+@dramatiq.actor(actor_name="run_analysis", queue_name="analysis", max_retries=0, time_limit=15 * 60 * 1000)
+def _run_analysis_message(run_id: str) -> None:  # pragma: no cover - API only enqueues
+    raise RuntimeError("API process should not execute analysis jobs")
+
+
+def enqueue_analysis(run_id: UUID) -> None:
+    try:
+        _run_analysis_message.send(str(run_id))
+    except Exception as exc:  # pragma: no cover - defensive queue failure path
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                            detail={"code": "QUEUE_UNAVAILABLE"}) from exc
+
+
 ALLOWED_UPLOAD_TYPES = {
     "application/pdf": {".pdf"},
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {".docx"},

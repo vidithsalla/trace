@@ -286,4 +286,5 @@ class SavedSearch(TimestampMixin, Base):
     query_json: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
+from app.models.claims import *  # noqa: E402,F401,F403  (register V3 tables)
 from app.models.evidence import *  # noqa: E402,F401,F403  (register V3 tables)

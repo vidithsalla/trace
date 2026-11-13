@@ -35,7 +35,7 @@ def login(payload: LoginRequest, response: Response, db: Session = Depends(get_d
         key=settings.session_cookie,
         value=create_session_token(str(user.id)),
         httponly=True,
-        secure=False,
+        secure=settings.secure_cookies,
         samesite="lax",
         path="/",
     )
