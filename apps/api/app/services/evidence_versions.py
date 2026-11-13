@@ -419,3 +419,15 @@ def create_snapshot(db: Session, matter_id: UUID, created_by: UUID | None) -> Co
                                          CorpusSnapshot.manifest_sha256 == digest)
         ).one()
     return snapshot
+
+
+def refresh_planner_statistics(db: Session) -> None:
+    """ANALYZE the evidence tables after a publish.
+
+    Measured (docs/retrieval-plans.md): right after a bulk insert, stale statistics made the
+    planner pick nested loops and the semantic query took 446 ms on 3,000 spans; after ANALYZE
+    it took 1.9 ms. ANALYZE samples rows, so this costs milliseconds.
+    """
+    from sqlalchemy import text as sql
+
+    db.execute(sql("ANALYZE source_spans, source_embeddings, corpus_snapshot_members, extraction_versions"))

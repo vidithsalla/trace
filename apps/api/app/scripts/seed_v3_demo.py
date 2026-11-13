@@ -16,6 +16,7 @@ from sqlalchemy import select
 from app.db.session import SessionLocal
 from app.models.domain import Document, Matter, MatterMember
 from app.scripts.seed_demo import ensure_seed_shell
+from app.services.evidence_versions import refresh_planner_statistics
 from app.services.text_ingest import ingest_text_document
 
 MATTER_NAME = "Halden Freight invoice dispute"
@@ -68,6 +69,8 @@ def main() -> None:
                 if 2 not in revs:
                     ingest_text_document(db, matter, attorney, title, text, document=existing,
                                          change_note="Controller's corrected memo of March 19")
+        db.commit()
+        refresh_planner_statistics(db)
         db.commit()
         print(f"seeded matter '{MATTER_NAME}' ({matter.id})")
 

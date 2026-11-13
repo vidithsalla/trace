@@ -65,19 +65,29 @@ def main() -> None:
             print(f"# Retrieval query plans · spans in snapshot: {spans} · "
                   f"postgres {db.execute(text('SHOW server_version')).scalar_one()} · code {settings.code_commit}\n")
             vector = LocalHashEmbeddingClient().embed_texts([QUESTION])[0]
-            for name, built in [
-                ("lexical", retrieval_v3.lexical_sql(matter_id=target.id, snapshot_id=snapshot.id, query=QUESTION, k=24)),
-                ("semantic (hash-v1 vectors, exact <=>)", retrieval_v3.semantic_sql(
-                    matter_id=target.id, snapshot_id=snapshot.id, vector=vector, k=24, profile_id="hash-v1")),
-                ("counterevidence challenge", retrieval_v3.challenge_sql(
-                    matter_id=target.id, snapshot_id=snapshot.id, claim=CLAIM, k=12)),
-            ]:
-                print(f"## {name}\n\n```\n{explain(db, built)}\n```\n")
+            for phase in ("before ANALYZE (fresh rows, stale planner statistics)", "after ANALYZE"):
+                if phase == "after ANALYZE":
+                    for table in ("source_spans", "source_embeddings", "corpus_snapshot_members",
+                                  "extraction_versions"):
+                        db.execute(text(f"ANALYZE {table}"))
+                print(f"# {phase}\n")
+                _plans(db, target, snapshot, vector)
         finally:
             if scratch is not None:
                 db.rollback()
                 db.execute(delete(Matter).where(Matter.id == scratch.id))
                 db.commit()
+
+
+def _plans(db, target, snapshot, vector) -> None:
+    for name, built in [
+        ("lexical", retrieval_v3.lexical_sql(matter_id=target.id, snapshot_id=snapshot.id, query=QUESTION, k=24)),
+        ("semantic (hash-v1 vectors, exact <=>)", retrieval_v3.semantic_sql(
+            matter_id=target.id, snapshot_id=snapshot.id, vector=vector, k=24, profile_id="hash-v1")),
+        ("counterevidence challenge", retrieval_v3.challenge_sql(
+            matter_id=target.id, snapshot_id=snapshot.id, claim=CLAIM, k=12)),
+    ]:
+        print(f"## {name}\n\n```\n{explain(db, built)}\n```\n")
 
 
 if __name__ == "__main__":

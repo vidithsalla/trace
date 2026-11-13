@@ -14,6 +14,14 @@ WEB_SRC=-v "$(CURDIR)/apps/web/app:/app/apps/web/app" -v "$(CURDIR)/apps/web/com
 web-check:
 	docker run --rm --user root $(WEB_SRC) -e NEXT_TELEMETRY_DISABLED=1 trace-web sh -c "pnpm typecheck && pnpm build"
 
+# Record EXPLAIN (ANALYZE, BUFFERS) for the retrieval SQL. Example:
+#   make explain-retrieval MATTER=<uuid> COPIES=150
+explain-retrieval:
+	docker run --rm --network trace_default --env-file .env -e PYTHONPATH=/app \
+	  -e TRACE_EMBEDDING_PROVIDER=hash -e TRACE_CODE_COMMIT=$(GIT_SHA) \
+	  -v "$(CURDIR)/apps/api/app:/app/app" -v trace_object-data:/data/objects $(API_IMAGE) \
+	  uv run python -m app.scripts.explain_retrieval --matter $(MATTER) --copies $(or $(COPIES),0) 2>/dev/null
+
 # V3 evals. Example: make eval-v3 ARGS="--engines mock,local --profiles all"
 eval-v3:
 	docker run --rm --network trace_default --env-file .env -e PYTHONPATH=/app \
@@ -75,7 +83,7 @@ phase0-verify:
 test-docker:
 	docker run --rm --network trace_default --env-file .env -e PYTHONPATH=/app \
 	  -v "$(CURDIR)/apps/api/app:/app/app" -v "$(CURDIR)/apps/api/alembic:/app/alembic" \
-	  -v "$(CURDIR)/apps/api/pyproject.toml:/app/pyproject.toml:ro" \
+	  -v "$(CURDIR)/apps/api/pyproject.toml:/app/pyproject.toml:ro" -v "$(CURDIR)/evals:/app/evals:ro" \
 	  -v trace_object-data:/data/objects $(API_IMAGE) \
 	  sh -c "uv run alembic upgrade head >/dev/null && uv run pytest -q -p no:warnings $(ARGS)"
 

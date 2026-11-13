@@ -5,6 +5,7 @@ from dramatiq.brokers.redis import RedisBroker
 
 from app.db.session import SessionLocal
 from app.services.analysis import execute_analysis
+from app.services.evidence_versions import refresh_planner_statistics
 from app.services.exports import process_export_job
 from app.services.ingestion import mark_ingest_failed, process_document
 from worker.settings import settings
@@ -19,6 +20,8 @@ def ingest_document(document_id: str) -> None:
     with SessionLocal() as db:
         try:
             process_document(db, parsed_document_id)
+            db.commit()
+            refresh_planner_statistics(db)
             db.commit()
         except Exception as exc:
             db.rollback()

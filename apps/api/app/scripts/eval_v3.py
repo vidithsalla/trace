@@ -38,6 +38,7 @@ from app.services import retrieval_v3
 from app.services.analysis import execute_analysis, start_analysis
 from app.services.change_control import ReviewRequest, submit_review
 from app.services.embeddings import OllamaEmbeddingClient
+from app.services.eval_validation import assert_valid_dataset, validate_profiles
 from app.services.evidence_versions import create_snapshot, write_embeddings
 from app.services.llm.client import CallBudget, LLMError, ProviderConfig
 from app.services.llm.contracts import EvidencePack, EvidencePackItem
@@ -378,11 +379,15 @@ def main() -> None:
     engines = args.engines.split(",")
     root = dataset_dir()
     manifest = json.loads((root / "manifest.json").read_text())
+    assert_valid_dataset(manifest, root / "sources")  # EVAL-01: refuse to score a broken/leaky set
     run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ") + "-" + settings.code_commit[:7]
     out_dir = Path(args.out) / run_id
     out_dir.mkdir(parents=True, exist_ok=True)
 
     with SessionLocal() as db:
+        bad_profiles = validate_profiles(db, {p: retrieval_v3.PROFILES[p] for p in profiles})
+        if bad_profiles:  # EVAL-02: never report hash vectors as a semantic experiment
+            raise SystemExit("; ".join(bad_profiles))
         world = World(db, root, manifest)
         try:
             results = {"retrieval": eval_retrieval(world, profiles, args.k),
