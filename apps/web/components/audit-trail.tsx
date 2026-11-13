@@ -63,7 +63,7 @@ export function AuditTrail({ matterId }: { matterId: string }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-neutral-700">{logs.length} recent matter audit events</p>
         <a
-          className="rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
+          className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
           href={`/api/audit/export.csv?matter_id=${matterId}`}
         >
           Export Audit CSV

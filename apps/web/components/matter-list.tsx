@@ -76,7 +76,7 @@ export function MatterList() {
     <div className="grid gap-5">
       {matters.map((matter) => (
         <Link
-          className="rounded-3xl border border-[var(--border)] bg-[var(--panel)] p-6 shadow-[0_10px_30px_rgba(29,29,26,0.06)] transition hover:-translate-y-0.5"
+          className="rounded-3xl border border-[var(--border)] bg-[var(--panel)] p-6 transition hover:-translate-y-0.5"
           href={`/matters/${matter.id}/documents`}
           key={matter.id}
         >
@@ -93,10 +93,10 @@ export function MatterList() {
               ) : null}
             </div>
             <div className="flex gap-2 text-xs uppercase tracking-[0.18em]">
-              <span className="rounded-full border border-[var(--border)] px-3 py-2">
+              <span className="rounded-md border border-[var(--border)] px-3 py-2">
                 {matter.status}
               </span>
-              <span className="rounded-full bg-[var(--muted)] px-3 py-2">
+              <span className="rounded-md bg-[var(--muted)] px-3 py-2">
                 {matter.role ?? "member"}
               </span>
             </div>

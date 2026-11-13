@@ -4,9 +4,24 @@ COMPOSE_MODEL=docker compose --env-file .env -f infra/compose/compose.yaml -f in
 COMPOSE_OCR=docker compose --env-file .env -f infra/compose/compose.yaml -f infra/compose/compose.ocr.yaml
 COMPOSE_FULL=docker compose --env-file .env -f infra/compose/compose.yaml -f infra/compose/compose.model.yaml -f infra/compose/compose.ocr.yaml
 
+.DEFAULT_GOAL := up
 API_IMAGE=trace-api
+GIT_SHA:=$(shell git describe --always --dirty 2>/dev/null || echo unknown)
 
-.PHONY: test-docker lint-docker test-real-model up up-model up-ocr up-full down logs api web worker test seed seed-raw eval eval-regression eval-all phase0-verify
+# Typecheck/build the web app from the working tree with the image's locked node_modules.
+WEB_SRC=-v "$(CURDIR)/apps/web/app:/app/apps/web/app" -v "$(CURDIR)/apps/web/components:/app/apps/web/components" \
+  -v "$(CURDIR)/apps/web/lib:/app/apps/web/lib" -v "$(CURDIR)/apps/web/next.config.ts:/app/apps/web/next.config.ts:ro"
+web-check:
+	docker run --rm --user root $(WEB_SRC) -e NEXT_TELEMETRY_DISABLED=1 trace-web sh -c "pnpm typecheck && pnpm build"
+
+# V3 evals. Example: make eval-v3 ARGS="--engines mock,local --profiles all"
+eval-v3:
+	docker run --rm --network trace_default --env-file .env -e PYTHONPATH=/app \
+	  -e TRACE_CODE_COMMIT=$(GIT_SHA) --add-host host.docker.internal:host-gateway \
+	  -v "$(CURDIR)/apps/api/app:/app/app" -v "$(CURDIR)/evals:/app/evals" \
+	  -v trace_object-data:/data/objects $(API_IMAGE) uv run python -m app.scripts.eval_v3 $(ARGS)
+
+.PHONY: eval-v3 test-docker lint-docker test-real-model up up-model up-ocr up-full down logs api web worker test seed seed-raw eval eval-regression eval-all phase0-verify
 
 up:
 	$(COMPOSE_CORE) up --build

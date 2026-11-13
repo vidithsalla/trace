@@ -17,4 +17,9 @@ COPY packages/ui /app/packages/ui
 
 WORKDIR /app/apps/web
 
-CMD ["pnpm", "dev", "--hostname", "0.0.0.0", "--port", "3000"]
+ENV NEXT_TELEMETRY_DISABLED=1 NODE_ENV=production
+RUN pnpm build
+
+# Production server, unprivileged user. For hot reload during development run `pnpm dev` locally.
+USER node
+CMD ["node_modules/.bin/next", "start", "--hostname", "0.0.0.0", "--port", "3000"]

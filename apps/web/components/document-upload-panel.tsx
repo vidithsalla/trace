@@ -99,7 +99,7 @@ export function DocumentUploadPanel({ matterId }: { matterId: string }) {
               Supported now: PDF, DOCX, TXT, CSV, XLSX, JPG, and PNG.
             </p>
           </div>
-          <label className="cursor-pointer rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-medium text-white">
+          <label className="cursor-pointer rounded-md bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-white">
             {isUploading ? "Uploading..." : "Choose file"}
             <input
               className="sr-only"
@@ -111,7 +111,7 @@ export function DocumentUploadPanel({ matterId }: { matterId: string }) {
           </label>
         </div>
         {error ? (
-          <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
             {error}
           </div>
         ) : null}
@@ -122,14 +122,14 @@ export function DocumentUploadPanel({ matterId }: { matterId: string }) {
       ) : (
         <div className="space-y-3">
           {documents.length === 0 ? (
-            <p className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm text-neutral-600">
+            <p className="rounded-md border border-[var(--border)] px-3 py-2 text-sm text-neutral-600">
               No documents uploaded yet.
             </p>
           ) : null}
           {documents.map((document) => (
             <div
               key={document.id}
-              className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[var(--border)] px-4 py-3"
+              className="flex flex-wrap items-center justify-between gap-4 rounded-md border border-[var(--border)] px-4 py-3"
             >
               <div>
                 <p className="font-medium">{document.display_name ?? document.file_name}</p>
@@ -161,7 +161,7 @@ export function DocumentUploadPanel({ matterId }: { matterId: string }) {
 
 function StatusBadge({ label, value }: { label: string; value: string }) {
   return (
-    <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[var(--accent)]">
+    <span className="rounded-md bg-[var(--accent-soft)] px-3 py-1 text-[var(--accent)]">
       {label}: {value}
     </span>
   );

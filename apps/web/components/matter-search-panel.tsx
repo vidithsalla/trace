@@ -62,7 +62,7 @@ export function MatterSearchPanel({ matterId }: { matterId: string }) {
         <div className="mt-3 flex flex-col gap-3 sm:flex-row">
           <input
             id="matter-search"
-            className="min-h-12 flex-1 rounded-2xl border border-[var(--border)] bg-white px-4 text-sm outline-none focus:border-[var(--accent)]"
+            className="min-h-12 flex-1 rounded-md border border-[var(--border)] bg-white px-4 text-sm outline-none focus:border-[var(--accent)]"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Try: defect knowledge before shipment"
@@ -70,7 +70,7 @@ export function MatterSearchPanel({ matterId }: { matterId: string }) {
           <button
             type="submit"
             disabled={isSearching || !query.trim()}
-            className="rounded-2xl bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+            className="rounded-2xl bg-[var(--accent)] px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
           >
             {isSearching ? "Searching..." : "Search"}
           </button>
@@ -98,13 +98,13 @@ export function MatterSearchPanel({ matterId }: { matterId: string }) {
                     Page {result.page_number ?? "n/a"} · score {result.score.toFixed(4)}
                   </p>
                 </div>
-                <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)]">
+                <span className="rounded-md bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)]">
                   Chunk
                 </span>
               </div>
               <p className="mt-4 text-sm leading-7 text-neutral-700">{result.snippet}</p>
               <a
-                className="mt-4 inline-flex rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
+                className="mt-4 inline-flex rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
                 href={viewerHref(matterId, result)}
               >
                 Open source page

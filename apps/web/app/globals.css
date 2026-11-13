@@ -1,28 +1,65 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --radius-3xl: 0.625rem;
+  --radius-2xl: 0.5rem;
+  --radius-xl: 0.5rem;
+}
+
 :root {
-  --background: #f6f3eb;
-  --foreground: #1d1d1a;
-  --muted: #ebe4d4;
-  --panel: #fffdf8;
-  --border: #d7ccb7;
-  --accent: #1f4a45;
-  --accent-soft: #d8ece7;
-  --warm: #785f2e;
+  /* Surfaces and text */
+  --background: #fafafa;
+  --surface: #ffffff;
+  --subtle: #f4f4f5;
+  --foreground: #18181b;
+  --muted-foreground: #71717a;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --ring: #2563eb;
+
+  /* Primary action: near-black, like most developer dashboards */
+  --primary: #18181b;
+  --primary-hover: #27272a;
+
+  /* Status: muted, readable, never neon */
+  --ok: #15803d;
+  --ok-bg: #f0fdf4;
+  --ok-border: #bbf7d0;
+  --warn: #a16207;
+  --warn-bg: #fefce8;
+  --warn-border: #fde68a;
+  --bad: #b91c1c;
+  --bad-bg: #fef2f2;
+  --bad-border: #fecaca;
+  --info: #1d4ed8;
+  --info-bg: #eff6ff;
+  --info-border: #bfdbfe;
+
+  /* Tokens used by the pre-V3 screens, mapped onto the new palette */
+  --panel: var(--surface);
+  --muted: var(--subtle);
+  --accent: var(--primary);
+  --accent-soft: var(--subtle);
+  --warm: var(--muted-foreground);
 }
 
 * {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   min-height: 100%;
-  background:
-    radial-gradient(circle at top right, rgba(120, 95, 46, 0.16), transparent 28%),
-    linear-gradient(180deg, #f8f4eb 0%, #f1eadb 100%);
+  background: var(--background);
   color: var(--foreground);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {
@@ -30,6 +67,23 @@ a {
   text-decoration: none;
 }
 
-body {
-  min-height: 100vh;
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: #dbeafe;
+}
+
+.quote {
+  font-family: var(--font-sans);
+  white-space: pre-wrap;
+}
+
+.quote mark {
+  background: #fef9c3;
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 2px;
 }

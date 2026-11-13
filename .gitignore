@@ -17,3 +17,4 @@ minio-data/
 .turbo/
 docs/internal/
 .git-old-with-internal-history/
+.gstack/

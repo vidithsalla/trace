@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import hash_password
-from app.db.base import Base
 from app.models.domain import (
     Document,
     DocumentChunk,
@@ -101,8 +100,8 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    # Schema comes from Alembic migrations (run at API start), never create_all.
     engine = create_engine(settings.database_url, future=True)
-    Base.metadata.create_all(engine)
     with Session(engine) as db:
         _, seeded_users, matter = ensure_seed_shell(db)
         if args.mode == "raw":

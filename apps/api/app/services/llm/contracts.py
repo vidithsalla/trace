@@ -44,8 +44,11 @@ class ProposedClaim(_Strict):
 
 
 class ClaimProposal(_Strict):
-    answer_status: Literal["proposed", "abstained", "insufficient_context"]
+    # Field order matters: constrained decoders emit fields in schema order. Putting the claims
+    # first makes the model write what the evidence establishes *before* it picks a status;
+    # with answer_status first, a 7B model committed to "insufficient_context" on every case.
     claims: list[ProposedClaim] = Field(max_length=8)
+    answer_status: Literal["proposed", "abstained", "insufficient_context"]
     abstention_reason: str | None = Field(max_length=400)
 
 

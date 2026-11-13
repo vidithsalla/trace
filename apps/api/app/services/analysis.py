@@ -153,7 +153,11 @@ def _run_pipeline(db: Session, run: AnalysisRun, engine: ClaimEngine, budget: Ca
 
     proposal = engine.propose_claims(run.question, EvidencePack(tuple(primary_items)), budget)
     coverage["model_answer_status"] = proposal.answer_status
-    if proposal.answer_status != "proposed" or not proposal.claims:
+    # The model's self-reported status is not trusted either way: claims it wrote are kept (and
+    # still gated, assessed and human-reviewed); with no claims the run abstains.
+    if proposal.claims and proposal.answer_status != "proposed":
+        coverage["model_status_disagreed"] = True
+    if not proposal.claims:
         _finish(run, "ABSTAINED", {**coverage, "reason": "MODEL_ABSTAINED",
                                     "abstention_reason": proposal.abstention_reason}, budget)
         return

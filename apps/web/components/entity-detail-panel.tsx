@@ -163,7 +163,7 @@ export function EntityDetailPanel({
             {[entity.canonical_name, ...entity.aliases_json].map((item) => (
               <span
                 key={item}
-                className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)]"
+                className="rounded-md bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)]"
               >
                 {item}
               </span>
@@ -171,7 +171,7 @@ export function EntityDetailPanel({
           </div>
           <form onSubmit={addAlias} className="mt-5 flex flex-col gap-3 sm:flex-row">
             <input
-              className="min-h-11 flex-1 rounded-2xl border border-[var(--border)] px-4 text-sm"
+              className="min-h-11 flex-1 rounded-md border border-[var(--border)] px-4 text-sm"
               placeholder="Add alias, e.g. J. Mercer"
               value={alias}
               onChange={(event) => setAlias(event.target.value)}
@@ -186,13 +186,13 @@ export function EntityDetailPanel({
           </form>
           <form onSubmit={mergeAlias} className="mt-3 flex flex-col gap-3 sm:flex-row">
             <input
-              className="min-h-11 flex-1 rounded-2xl border border-[var(--border)] px-4 text-sm"
+              className="min-h-11 flex-1 rounded-md border border-[var(--border)] px-4 text-sm"
               placeholder="Source entity ID to merge"
               value={sourceEntityId}
               onChange={(event) => setSourceEntityId(event.target.value)}
             />
             <button
-              className="rounded-2xl border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--accent)] disabled:opacity-50"
+              className="rounded-md border border-[var(--border)] px-4 py-2 text-sm font-semibold text-[var(--accent)] disabled:opacity-50"
               disabled={isSaving || !sourceEntityId.trim()}
               type="submit"
             >
@@ -220,7 +220,7 @@ export function EntityDetailPanel({
                 </p>
                 {mention.viewer_url ? (
                   <a
-                    className="mt-3 inline-flex rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
+                    className="mt-3 inline-flex rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
                     href={mention.viewer_url}
                   >
                     Open source
@@ -238,14 +238,14 @@ export function EntityDetailPanel({
               <p className="text-sm text-neutral-600">No chronology events reference this entity yet.</p>
             ) : null}
             {entity.timeline.map((item) => (
-              <div key={item.event_id} className="rounded-2xl border border-[var(--border)] p-4">
+              <div key={item.event_id} className="rounded-md border border-[var(--border)] p-4">
                 <p className="text-xs uppercase tracking-[0.16em] text-[var(--warm)]">
                   {item.date ?? item.date_text ?? "Undated"}
                 </p>
                 <p className="mt-2 font-semibold">{item.title}</p>
                 <p className="mt-2 text-sm leading-6 text-neutral-700">{item.description}</p>
                 {item.conflict_flag ? (
-                  <span className="mt-3 inline-flex rounded-full bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
+                  <span className="mt-3 inline-flex rounded-md bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800">
                     disputed
                   </span>
                 ) : null}

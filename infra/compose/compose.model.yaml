@@ -4,6 +4,8 @@ x-local-model: &local-model
   TRACE_MODEL_PROVIDER: local
   TRACE_MODEL_NAME: ${TRACE_MODEL_NAME:-qwen2.5:7b-instruct}
   TRACE_MODEL_BASE_URL: ${TRACE_MODEL_BASE_URL:-http://host.docker.internal:11434/v1}
+  TRACE_EMBEDDING_PROVIDER: ollama
+  TRACE_EMBEDDING_BASE_URL: ${TRACE_EMBEDDING_BASE_URL:-http://host.docker.internal:11434/v1}
 
 services:
   api:

@@ -13,6 +13,7 @@ RUN uv sync --frozen --no-install-project
 COPY apps/api/ /app/
 COPY seed_data/ /app/seed_data/
 COPY seed_truth/ /app/seed_truth/
+COPY evals/ /app/evals/
 COPY infra/scripts/api_start.sh /app/api_start.sh
 
 RUN chmod +x /app/api_start.sh

@@ -143,14 +143,14 @@ export function DocumentViewer({
       </div>
 
       {error ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {error}
         </div>
       ) : null}
 
       <div className="flex flex-wrap items-center gap-3 rounded-3xl border border-[var(--border)] bg-[var(--muted)] p-4">
         <button
-          className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40"
+          className="rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40"
           disabled={pageNumber <= 1}
           onClick={() => jumpToPage(pageNumber - 1)}
         >
@@ -168,14 +168,14 @@ export function DocumentViewer({
           />
         </label>
         <button
-          className="rounded-full border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40"
+          className="rounded-md border border-[var(--border)] bg-white px-4 py-2 text-sm font-semibold disabled:opacity-40"
           disabled={pageNumber >= maxPage}
           onClick={() => jumpToPage(pageNumber + 1)}
         >
           Next
         </button>
         <a
-          className="ml-auto rounded-full bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
+          className="ml-auto rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white"
           href={sourceUrl}
           target="_blank"
           rel="noreferrer"
@@ -203,7 +203,7 @@ export function DocumentViewer({
             </span>
           </div>
           {normalizedQuote ? (
-            <div className="mb-4 rounded-2xl border border-[var(--border)] bg-[var(--accent-soft)] p-4">
+            <div className="mb-4 rounded-md border border-[var(--border)] bg-[var(--accent-soft)] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
                 Citation context{chunkId ? ` · ${chunkId.slice(0, 8)}` : ""}
               </p>
@@ -247,7 +247,7 @@ function SourcePreview({
   if (document.mime_type === "application/pdf") {
     return (
       <iframe
-        className="h-[680px] w-full rounded-2xl border border-[var(--border)] bg-[var(--muted)]"
+        className="h-[680px] w-full rounded-md border border-[var(--border)] bg-[var(--muted)]"
         src={pdfUrl}
         title={document.display_name ?? document.file_name}
       />
@@ -267,14 +267,14 @@ function SourcePreview({
   if (document.mime_type.startsWith("text/")) {
     return (
       <iframe
-        className="h-[680px] w-full rounded-2xl border border-[var(--border)] bg-[var(--muted)]"
+        className="h-[680px] w-full rounded-md border border-[var(--border)] bg-[var(--muted)]"
         src={sourceUrl}
         title={document.display_name ?? document.file_name}
       />
     );
   }
   return (
-    <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--muted)] p-6 text-sm leading-7 text-neutral-700">
+    <div className="rounded-md border border-dashed border-[var(--border)] bg-[var(--muted)] p-6 text-sm leading-7 text-neutral-700">
       Source preview is not available for this file type yet. Use “Open source” to inspect the
       original alongside the extracted text.
     </div>
@@ -324,7 +324,7 @@ function ViewerError({ message, matterId }: { message: string; matterId: string 
 
 function StatusBadge({ label, value }: { label: string; value: string }) {
   return (
-    <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[var(--accent)]">
+    <span className="rounded-md bg-[var(--accent-soft)] px-3 py-1 text-[var(--accent)]">
       {label}: {value}
     </span>
   );
