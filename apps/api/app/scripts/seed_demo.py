@@ -20,6 +20,7 @@ from app.models.domain import (
     User,
 )
 from app.services.entities import extract_entities_for_matter
+from app.services.evidence_versions import backfill_legacy_document
 from app.services.ingestion import process_document
 from app.services.storage import storage_service
 
@@ -108,6 +109,9 @@ def main() -> None:
             seed_raw_ingestion(db, matter, seeded_users["attorney@trace.local"])
         else:
             seed_fast_bootstrap(db, matter, seeded_users["attorney@trace.local"])
+            db.flush()
+            for document in db.scalars(select(Document).where(Document.matter_id == matter.id)):
+                backfill_legacy_document(db, document)
         seed_entities(db, matter)
         db.flush()
         extract_entities_for_matter(db, matter.id, seeded_users["attorney@trace.local"].id)

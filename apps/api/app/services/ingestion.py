@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 from uuid import UUID
 
@@ -10,6 +11,12 @@ from app.models.domain import Document, DocumentChunk, DocumentPage, IngestJob, 
 from app.services.audit import record_audit_event
 from app.services.embeddings import get_embedding_client
 from app.services.entities import extract_entities_for_matter
+from app.services.evidence_versions import (
+    PageText,
+    parser_profile,
+    pending_version_for,
+    publish_extraction,
+)
 from app.services.parsers import ParsedPage, get_parser
 from app.services.storage import storage_service
 
@@ -76,9 +83,19 @@ def process_document(db: Session, document_id: UUID) -> None:
         raise ValueError("Document not found")
 
     ingest_job = _start_ingest_job(db, document)
-    content = storage_service.get_object_bytes(document.storage_key)
-    parser = get_parser(document.mime_type, document.file_name)
-    parse_result = parser.parse(content, file_name=document.file_name)
+    version = pending_version_for(db, document)
+    content = storage_service.get_object_bytes(version.storage_key)
+    if version.source_sha256 and hashlib.sha256(content).hexdigest() != version.source_sha256:
+        raise ValueError("stored bytes do not match the version's SHA-256")
+    parser = get_parser(version.mime_type, version.file_name)
+    parse_result = parser.parse(content, file_name=version.file_name)
+    publish_extraction(
+        db,
+        version,
+        [PageText(page.page_number, page.normalized_text) for page in parse_result.pages],
+        profile=parser_profile(type(parser).__name__),
+        warnings=[] if parse_result.parse_status == "completed" else [f"PARSE_{parse_result.parse_status.upper()}"],
+    )
 
     db.execute(delete(DocumentChunk).where(DocumentChunk.document_id == document.id))
     db.execute(delete(DocumentPage).where(DocumentPage.document_id == document.id))
@@ -188,7 +205,12 @@ def mark_ingest_failed(db: Session, document_id: UUID, exc: Exception) -> None:
 
 
 def _start_ingest_job(db: Session, document: Document) -> IngestJob:
-    ingest_job = db.scalar(select(IngestJob).where(IngestJob.document_id == document.id))
+    ingest_job = db.scalar(
+        select(IngestJob)
+        .where(IngestJob.document_id == document.id)
+        .order_by(IngestJob.created_at.desc())
+        .limit(1)
+    )
     if ingest_job is None:
         ingest_job = IngestJob(document_id=document.id, matter_id=document.matter_id)
         db.add(ingest_job)

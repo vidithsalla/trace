@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,8 +9,12 @@ from app.core.deps import get_current_user, get_db
 from app.models.domain import Document, DocumentPage
 from app.schemas.document import DocumentDetail, DocumentListItem, DocumentPageRead
 from app.services.audit import record_audit_event
-from app.services.document import enqueue_ingest_job, queue_document_upload
-from app.services.matter import ensure_matter_access
+from app.services.document import (
+    enqueue_ingest_job,
+    queue_document_upload,
+    queue_new_document_version,
+)
+from app.services.matter import WRITE_ROLES, ensure_matter_access, ensure_matter_role
 from app.services.storage import storage_service
 
 router = APIRouter()
@@ -170,3 +174,43 @@ def get_document_page(
     )
     db.commit()
     return page
+
+
+@router.post("/matters/{matter_id}/documents/{document_id}/versions", status_code=202)
+async def upload_document_version(
+    matter_id: UUID,
+    document_id: UUID,
+    file: UploadFile = File(...),
+    expected_revision: int = Form(...),
+    change_note: str | None = Form(None, max_length=500),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+) -> dict:
+    """Upload a corrected or revised file as a new immutable version of an existing document."""
+    ensure_matter_role(db, matter_id, current_user, WRITE_ROLES)
+    document = db.get(Document, document_id)
+    if document is None or document.matter_id != matter_id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
+    version, ingest_job = await queue_new_document_version(
+        db, document, current_user.id, file,
+        expected_revision=expected_revision, change_note=change_note,
+    )
+    record_audit_event(
+        db,
+        organization_id=current_user.organization_id,
+        user_id=current_user.id,
+        matter_id=matter_id,
+        action="upload_document_version",
+        target_type="document",
+        target_id=document.id,
+        metadata={"revision_no": version.revision_no, "version_id": str(version.id)},
+    )
+    db.commit()
+    try:
+        enqueue_ingest_job(document.id)
+    except HTTPException:
+        ingest_job.status = "failed"
+        db.commit()
+        raise
+    return {"document_id": str(document.id), "version_id": str(version.id),
+            "revision_no": version.revision_no, "state": version.state}

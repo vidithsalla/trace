@@ -87,6 +87,7 @@ class Document(TimestampMixin, Base):
     extraction_quality_score: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
     metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    current_version_id: Mapped[uuid.UUID | None] = mapped_column(nullable=True)
 
 
 class DocumentPage(TimestampMixin, Base):
@@ -283,3 +284,6 @@ class SavedSearch(TimestampMixin, Base):
     created_by: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"))
     name: Mapped[str] = mapped_column(Text)
     query_json: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+from app.models.evidence import *  # noqa: E402,F401,F403  (register V3 tables)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from io import BytesIO, StringIO
 from pathlib import Path
@@ -46,7 +47,8 @@ class DocumentParser(Protocol):
 
 
 def normalize_text(text: str) -> str:
-    text = text.replace("\x00", "")
+    """Normalization ``nfc-ws-v1``: NFC, NUL removal, per-line whitespace collapse, blank-line cap."""
+    text = unicodedata.normalize("NFC", text.replace("\x00", ""))
     text = "\n".join(WHITESPACE_RE.sub(" ", line).strip() for line in text.splitlines())
     return LINE_GAP_RE.sub("\n\n", text).strip()
 

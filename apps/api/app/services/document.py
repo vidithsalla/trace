@@ -1,4 +1,5 @@
 import hashlib
+import re
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.domain import Document, IngestJob
+from app.services.evidence_versions import create_document_version
 from app.services.storage import storage_service
 
 broker = RedisBroker(url=settings.redis_url)
@@ -112,7 +114,10 @@ async def _prepare_upload(matter_id: UUID, file: UploadFile) -> PreparedUpload:
 
     _validate_signature(content_type, head)
 
-    storage_key = f"matters/{matter_id}/documents/{uuid4()}-{file_name}"
+    # The key never contains the user-supplied name (kept in the DB), only a sanitized extension.
+    suffix = Path(file_name).suffix.lower()
+    suffix = suffix if re.fullmatch(r"\.[a-z0-9]{1,8}", suffix) else ""
+    storage_key = f"matters/{matter_id}/documents/{uuid4().hex}{suffix}"
     return PreparedUpload(
         file_name=file_name,
         content_type=content_type,
@@ -159,6 +164,11 @@ async def queue_document_upload(
     )
     db.add(document)
     db.flush()
+    create_document_version(
+        db, document, storage_key=prepared.storage_key, source_sha256=prepared.sha256,
+        file_name=prepared.file_name, mime_type=prepared.content_type,
+        file_size_bytes=prepared.file_size_bytes, created_by=user_id,
+    )
 
     ingest_job = IngestJob(
         document_id=document.id,
@@ -170,3 +180,59 @@ async def queue_document_upload(
     db.flush()
 
     return document, ingest_job
+
+
+async def queue_new_document_version(
+    db: Session,
+    document: Document,
+    user_id: UUID,
+    file: UploadFile,
+    *,
+    expected_revision: int,
+    change_note: str | None,
+):
+    """Store a corrected/revised file as a new immutable version of ``document``."""
+    from app.models.evidence import DocumentVersion  # local import keeps module load order simple
+    from app.services.evidence_versions import next_revision_no
+
+    current_revision = next_revision_no(db, document.id) - 1
+    if expected_revision != current_revision:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"code": "DOCUMENT_REVISION_CHANGED", "current_revision": current_revision},
+        )
+    prepared = await _prepare_upload(document.matter_id, file)
+    try:
+        latest = db.query(DocumentVersion).filter(
+            DocumentVersion.document_id == document.id,
+            DocumentVersion.revision_no == current_revision,
+        ).one_or_none()
+        if latest is not None and latest.source_sha256 == prepared.sha256:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"code": "IDENTICAL_CONTENT", "current_revision": current_revision},
+            )
+        storage_service.upload_fileobj(prepared.storage_key, prepared.fileobj, prepared.content_type)
+    finally:
+        prepared.fileobj.close()
+
+    version = create_document_version(
+        db, document, storage_key=prepared.storage_key, source_sha256=prepared.sha256,
+        file_name=prepared.file_name, mime_type=prepared.content_type,
+        file_size_bytes=prepared.file_size_bytes, created_by=user_id, change_note=change_note,
+    )
+    # Legacy (V1) columns mirror the newest upload.
+    document.storage_key = prepared.storage_key
+    document.sha256 = prepared.sha256
+    document.file_size_bytes = prepared.file_size_bytes
+    document.mime_type = prepared.content_type
+    document.ingest_status = "queued"
+    ingest_job = IngestJob(
+        document_id=document.id,
+        matter_id=document.matter_id,
+        status="queued",
+        metadata_json={"storage_key": prepared.storage_key, "revision_no": version.revision_no},
+    )
+    db.add(ingest_job)
+    db.flush()
+    return version, ingest_job
