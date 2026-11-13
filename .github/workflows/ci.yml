@@ -61,6 +61,11 @@ jobs:
         run: uv run alembic upgrade head
       - name: Test
         run: uv run pytest -q -p no:warnings
+      - name: Worker imports with its own locked dependencies
+        working-directory: apps/worker
+        run: |
+          uv sync --frozen --no-install-project
+          uv run python -c "import worker.tasks; print('worker import ok')"
 
   web:
     name: Web typecheck and build

@@ -96,7 +96,7 @@ export function Investigate({ matterId }: { matterId: string }) {
       {error ? <div className="mb-4"><Notice tone="bad">{error}</Notice></div> : null}
 
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
-        <Panel title="Recent investigations" padded={false}>
+        <Panel title="Recent investigations" padded={false} className="self-start">
           {runs.length === 0 ? (
             <p className="px-4 py-6 text-sm text-[var(--muted-foreground)]">None yet.</p>
           ) : (

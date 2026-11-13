@@ -27,8 +27,6 @@ services:
       - ../../.env
     volumes:
       - object-data:/data/objects
-    ports:
-      - "127.0.0.1:${TRACE_API_PORT:-8000}:8000"
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,8 +64,6 @@ services:
       POSTGRES_DB: ${TRACE_POSTGRES_DB:-trace}
       POSTGRES_USER: ${TRACE_POSTGRES_USER:-trace}
       POSTGRES_PASSWORD: ${TRACE_POSTGRES_PASSWORD:-trace}
-    ports:
-      - "127.0.0.1:${TRACE_POSTGRES_HOST_PORT:-5432}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -78,8 +74,6 @@ services:
 
   redis:
     image: redis:7-alpine
-    ports:
-      - "127.0.0.1:${TRACE_REDIS_HOST_PORT:-6379}:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s

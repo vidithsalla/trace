@@ -1,50 +1,52 @@
 # Known limitations
 
-This file states what Trace does **not** do yet. It is updated as V3 work lands; anything not
-listed under "Verified" in the README is planned, not shipped.
+What Trace does not do, or does only partially. Kept current with the code.
 
 ## Model and inference
 
-- V3 claim extraction and support assessment call a real model through one OpenAI-compatible
-  client: `local` (Ollama/llama.cpp/vLLM, default) or `hosted` (requires explicit egress
-  acknowledgement). `mock` is a deterministic rule set used only when configured (tests, CI).
-- Real-model tests are opt-in (`make test-real-model`) and are not run in CI.
-- V1 workflows (Q&A panel, chronology, entities, contradictions, memos) still run on the
-  deterministic legacy engine and are labeled `trace-legacy-deterministic` in AI-run records.
-- A 7B local model is noticeably weaker than frontier hosted models at strict JSON and at subtle
-  conditional language. Measured failure rates are reported in the eval results, not assumed.
+- V3 claims and support assessments use a real model through one OpenAI-compatible client:
+  `local` (Ollama by default) or `hosted` (explicit egress acknowledgement required). `mock` is a
+  deterministic rule set used only when configured, and every run records which one it used.
+- The default local model is a 7B model (`qwen2.5:7b-instruct`). It is slow on a laptop
+  (tens of seconds per investigation) and weaker than frontier hosted models. Measured numbers
+  are in `RESULTS.md`.
+- Real-model tests are opt-in (`make test-real-model`, `make eval-v3`) and are not run in CI.
+- The V1 workflows under "More tools" (Q&A panel, chronology, entities, contradictions, memos)
+  still run on the deterministic legacy engine, labeled `trace-legacy-deterministic`.
 
-## Retrieval
+## Retrieval and evidence
 
-- Vector similarity is computed in Python over candidate chunks loaded from PostgreSQL, not by
-  pgvector in SQL.
-- The default embedding provider is a deterministic local hash, which is not semantic. The
-  optional `sentence_transformer` provider has only been tested against a fake model.
-- Chunk "token" counts are whitespace word counts.
-
-## Citations and evidence
-
-- Citation validation checks that cited chunks belong to the matter and that the quoted string
-  appears in stored text. A real quote can still be incomplete, outdated, out of context, or
-  contrary to the claim. Quote presence is not entailment.
-- Documents are not versioned. Re-uploading creates a new document; there is no record of which
-  version of a source a decision relied on.
+- V3 retrieval runs in SQL (full-text and pgvector exact search). The V1 search screen still ranks
+  vectors in Python over loaded chunks.
+- Counterevidence search is lexical (anchor terms plus a fixed list of qualification words) fused
+  with semantic neighbours. It is not exhaustive and the UI says so.
+- The new-evidence detector (`overlap-v1`) is a lexical overlap heuristic. It can miss relevant
+  documents and flag irrelevant ones.
+- Spans are sentence-level. Evidence that only makes sense across several sentences is shown as
+  several spans.
 
 ## Documents
 
-- OCR is disabled by default; scanned PDFs without a text layer produce no searchable text.
-- No layout-aware parsing: tables and multi-column PDFs are flattened.
-
-## Security and operations
-
-- Local portfolio application. It has not been deployed for external users, audited, or
-  penetration tested.
-- Development defaults include a placeholder secret key and an insecure demo login. The API now
-  refuses to start with these when `TRACE_ENV` is not `development` or `test`.
-- The test suite runs against the same database as the local dev stack.
+- OCR is disabled by default; scanned PDFs without a text layer produce no passages (the source
+  shows a `NO_TEXT_EXTRACTED` warning rather than pretending the document says nothing).
+- No layout-aware parsing: tables and multi-column PDFs are flattened. No pixel-level highlight
+  in the original PDF; passages are shown as exact normalized text with page numbers.
+- Documents that existed before V3 were backfilled from stored page text; when original bytes
+  were unavailable their versions are marked `unknown_legacy` instead of given a hash.
 
 ## Evaluation
 
-- Current evals use synthetic seed data and static truth packs authored alongside the system.
-  They are regression checks, not a held-out measurement of accuracy.
+- The V3 evaluation set is small and synthetic (one dispute, 5 end-to-end cases, 18 labeled
+  claim/passage pairs), written by the project author. Results show the mechanism and catch
+  regressions; they are not a measurement of accuracy on real matters.
+- The claim-proposal prompt and schema were revised after observing failures on this same set.
+  There is no held-out split yet, so end-to-end numbers are development-set numbers.
 - No lawyer or qualified reviewer has validated any output.
+
+## Security and operations
+
+- Local application, not deployed for external users, not audited. See `SECURITY.md`.
+- Demo accounts share a known password in development mode.
+- Analysis runs are not retried automatically after a worker crash (to avoid silently repeating
+  model calls). A run that outlives the job time limit is shown as failed (`worker_lost`) and
+  must be re-requested.

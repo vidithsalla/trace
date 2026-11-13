@@ -1,5 +1,5 @@
 APP_NAME=Trace
-COMPOSE_CORE=docker compose --env-file .env -f infra/compose/compose.yaml
+COMPOSE_CORE=docker compose --env-file .env -f infra/compose/compose.yaml -f infra/compose/compose.ports.yaml
 COMPOSE_MODEL=docker compose --env-file .env -f infra/compose/compose.yaml -f infra/compose/compose.model.yaml
 COMPOSE_OCR=docker compose --env-file .env -f infra/compose/compose.yaml -f infra/compose/compose.ocr.yaml
 COMPOSE_FULL=docker compose --env-file .env -f infra/compose/compose.yaml -f infra/compose/compose.model.yaml -f infra/compose/compose.ocr.yaml

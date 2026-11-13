@@ -6,6 +6,7 @@ request are selectors, never grants. Every query is filtered by ``matter_id``.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
@@ -92,7 +93,21 @@ def _claim_summary(db: Session, claim: Claim) -> dict:
     }
 
 
+STUCK_AFTER = timedelta(minutes=20)  # worker job time limit is 15 minutes
+
+
+def _expire_if_stuck(db: Session, run: AnalysisRun) -> None:
+    """A run still RUNNING long after the job time limit lost its worker; say so explicitly."""
+    started = run.started_at or run.created_at
+    if run.status in ("QUEUED", "RUNNING") and started and datetime.now(UTC) - started > STUCK_AFTER:
+        run.status = "FAILED"
+        run.error_code = "worker_lost"
+        run.completed_at = datetime.now(UTC)
+        db.commit()
+
+
 def _run_view(db: Session, run: AnalysisRun, with_claims: bool = True) -> dict:
+    _expire_if_stuck(db, run)
     view = {
         "id": str(run.id), "question": run.question, "status": run.status,
         "error_code": run.error_code, "retrieval_profile": run.retrieval_profile,

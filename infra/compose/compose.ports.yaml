@@ -1,0 +1,12 @@
+# Optional overlay for development: publish the API, Postgres and Redis on localhost so host tools can
+# reach them. Not used by the installer; the app only needs them on the internal network.
+services:
+  api:
+    ports:
+      - "127.0.0.1:${TRACE_API_PORT:-8000}:8000"
+  postgres:
+    ports:
+      - "127.0.0.1:${TRACE_POSTGRES_HOST_PORT:-5432}:5432"
+  redis:
+    ports:
+      - "127.0.0.1:${TRACE_REDIS_HOST_PORT:-6379}:6379"

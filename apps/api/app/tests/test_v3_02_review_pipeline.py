@@ -404,3 +404,18 @@ def test_concurrent_opposite_reviews_exactly_one_wins(client, world, corpus, eng
     events = db.scalars(select(ReviewEvent).where(ReviewEvent.claim_id == uuid.UUID(claim["id"]))).all()
     assert len(events) == 1
     assert db.get(Claim, uuid.UUID(claim["id"])).review_seq == 1
+
+
+def test_run_that_outlives_worker_time_limit_is_shown_as_failed(client, world, corpus, engine, db):
+    from datetime import UTC, datetime, timedelta
+
+    from app.services.analysis import start_analysis
+
+    run, _ = start_analysis(db, matter_id=world.matter.id, user_id=world.reviewer.id,
+                            question="Was invoice 7A approved?", profile=None, idempotency_key="stuck-run-key")
+    run.status = "RUNNING"
+    run.started_at = datetime.now(UTC) - timedelta(hours=1)
+    db.commit()
+    login(client, world.reviewer)
+    body = client.get(f"/matters/{world.matter.id}/analyses/{run.id}").json()
+    assert body["status"] == "FAILED" and body["error_code"] == "worker_lost"
