@@ -122,8 +122,18 @@ more variants (re-check, coverage alerts, dismissal, packet exclusion).
 All inference is local; there is no per-token cost. For the local model, per-call latency in
 this run was p50 2.8 s / p95 3.6 s for single-passage support labels and p50 19.7 s / p95 39.7 s
 for end-to-end calls (claim proposal and multi-passage assessment, up to 12 passages). A full
-investigation took 40–135 s. Docker image builds overlapped part of this run, so treat those
-end-to-end numbers as an upper bound; a quiet re-run is reported below when available.
+investigation took 40–135 s. Docker builds overlapped part of this run, so a second local-only
+run was made with nothing else running (same code; the tree had uncommitted documentation edits,
+so it is not published as a result): p50 18.0 s / p95 29.8 s per end-to-end call, 38–144 s per
+question. The 7B model on a laptop is simply slow; contention was not the main factor.
+
+## Run-to-run variation
+
+Temperature 0 does not make Ollama fully deterministic. In the second run, CP-05 (unanswerable)
+was an abstention instead of a *not established* claim, and CP-04's claim was labeled *mixed*
+instead of *contradicted*. Support labels on the 18 fixed pairs were identical (16/18, 0 unsafe).
+Neither change is unsafe, but single-run end-to-end numbers on 5 questions carry real noise;
+repeated runs with variance reporting are on the list below.
 
 ## What changed during development
 
@@ -151,5 +161,6 @@ eval harness now stamps such runs `-dirty`.
 - A held-out set, or any public benchmark (LegalBench-RAG for span retrieval, ContractNLI for
   entailment labels). Both need a licence review before their data can be used here.
 - Hosted models, for comparison with the local 7B model.
+- Repeated runs with variance (see run-to-run variation above).
 - Alert precision of the new-evidence detector on a realistic corpus.
 - Retrieval at a scale where an ANN index would matter.

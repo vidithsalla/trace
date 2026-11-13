@@ -111,56 +111,76 @@ def _scope(pre: str = "", join: str = "") -> str:
 """
 
 
-def lexical(db: Session, *, matter_id: UUID, snapshot_id: UUID, query: str, k: int,
-            exclude: Sequence[UUID] = ()) -> list[Candidate]:
+# SQL builders return (statement, params) so the exact production queries can also be run under
+# EXPLAIN (ANALYZE, BUFFERS) by app.scripts.explain_retrieval.
+def lexical_sql(*, matter_id: UUID, snapshot_id: UUID, query: str, k: int,
+                exclude: Sequence[UUID] = ()):
     terms = query_terms(query)
     if not terms:
-        return []
-    rows = db.execute(text(f"""
+        return None
+    return text(f"""
         SELECT s.id, ts_rank_cd(s.search, q) AS score
         {_scope(pre="to_tsquery('english', :tsq) q, ")}
           AND s.search @@ q
         ORDER BY score DESC, s.id
-        LIMIT :k"""),
-        {"tsq": _or_tsquery(terms), "snapshot": snapshot_id, "matter": matter_id, "k": k,
-         "exclude": [str(e) for e in exclude]},
-    ).all()
-    return [Candidate(r[0], float(r[1]), "lexical", i + 1) for i, r in enumerate(rows)]
+        LIMIT :k"""), {"tsq": _or_tsquery(terms), "snapshot": snapshot_id, "matter": matter_id,
+                       "k": k, "exclude": [str(e) for e in exclude]}
 
 
-def semantic(db: Session, *, matter_id: UUID, snapshot_id: UUID, query: str, k: int,
-             profile_id: str, exclude: Sequence[UUID] = ()) -> list[Candidate]:
-    vector = _embedder_for(profile_id).embed_texts([query])[0]
-    rows = db.execute(text(f"""
+def semantic_sql(*, matter_id: UUID, snapshot_id: UUID, vector: Sequence[float], k: int,
+                 profile_id: str, exclude: Sequence[UUID] = ()):
+    return text(f"""
         SELECT s.id, 1 - (e.embedding <=> CAST(:qv AS vector)) AS score
         {_scope(join="JOIN source_embeddings e ON e.source_span_id = s.id AND e.matter_id = s.matter_id")}
           AND e.embedding_profile_id = :profile
         ORDER BY e.embedding <=> CAST(:qv AS vector), s.id
-        LIMIT :k"""),
-        {"qv": "[" + ",".join(f"{v:.7f}" for v in vector) + "]", "profile": profile_id,
-         "snapshot": snapshot_id, "matter": matter_id, "k": k,
-         "exclude": [str(e) for e in exclude]},
-    ).all()
-    return [Candidate(r[0], float(r[1]), f"semantic:{profile_id}", i + 1) for i, r in enumerate(rows)]
+        LIMIT :k"""), {"qv": "[" + ",".join(f"{v:.7f}" for v in vector) + "]",
+                       "profile": profile_id, "snapshot": snapshot_id, "matter": matter_id,
+                       "k": k, "exclude": [str(e) for e in exclude]}
 
 
-def challenge(db: Session, *, matter_id: UUID, snapshot_id: UUID, claim: str, k: int,
-              exclude: Sequence[UUID] = ()) -> list[Candidate]:
-    """Spans sharing the claim's anchors that also contain qualification/reversal language."""
+def challenge_sql(*, matter_id: UUID, snapshot_id: UUID, claim: str, k: int,
+                  exclude: Sequence[UUID] = ()):
     anchors = anchor_terms(claim)
     if not anchors:
-        return []
-    rows = db.execute(text(f"""
+        return None
+    return text(f"""
         SELECT s.id, ts_rank_cd(s.search, q) AS score
         {_scope(pre="to_tsquery('english', :tsq) q, ")}
           AND s.search @@ q
           AND s.text ~* :challenge
         ORDER BY score DESC, s.id
-        LIMIT :k"""),
-        {"tsq": _or_tsquery(anchors), "challenge": CHALLENGE_REGEX, "snapshot": snapshot_id,
-         "matter": matter_id, "k": k, "exclude": [str(e) for e in exclude]},
-    ).all()
-    return [Candidate(r[0], float(r[1]), "challenge", i + 1) for i, r in enumerate(rows)]
+        LIMIT :k"""), {"tsq": _or_tsquery(anchors), "challenge": CHALLENGE_REGEX,
+                       "snapshot": snapshot_id, "matter": matter_id, "k": k,
+                       "exclude": [str(e) for e in exclude]}
+
+
+def _run(db: Session, built, retriever: str) -> list[Candidate]:
+    if built is None:
+        return []
+    statement, params = built
+    rows = db.execute(statement, params).all()
+    return [Candidate(r[0], float(r[1]), retriever, i + 1) for i, r in enumerate(rows)]
+
+
+def lexical(db: Session, *, matter_id: UUID, snapshot_id: UUID, query: str, k: int,
+            exclude: Sequence[UUID] = ()) -> list[Candidate]:
+    return _run(db, lexical_sql(matter_id=matter_id, snapshot_id=snapshot_id, query=query, k=k,
+                                exclude=exclude), "lexical")
+
+
+def semantic(db: Session, *, matter_id: UUID, snapshot_id: UUID, query: str, k: int,
+             profile_id: str, exclude: Sequence[UUID] = ()) -> list[Candidate]:
+    vector = _embedder_for(profile_id).embed_texts([query])[0]
+    return _run(db, semantic_sql(matter_id=matter_id, snapshot_id=snapshot_id, vector=vector, k=k,
+                                 profile_id=profile_id, exclude=exclude), f"semantic:{profile_id}")
+
+
+def challenge(db: Session, *, matter_id: UUID, snapshot_id: UUID, claim: str, k: int,
+              exclude: Sequence[UUID] = ()) -> list[Candidate]:
+    """Spans sharing the claim's anchors that also contain qualification/reversal language."""
+    return _run(db, challenge_sql(matter_id=matter_id, snapshot_id=snapshot_id, claim=claim, k=k,
+                                  exclude=exclude), "challenge")
 
 
 def fuse(*ranked: list[Candidate], k: int) -> list[Candidate]:

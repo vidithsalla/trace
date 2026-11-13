@@ -57,7 +57,10 @@ fi
 # Pick a free port for the web UI if 3000 is taken.
 port_free() { ! (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
 WEB_PORT="$(grep -E '^TRACE_WEB_PORT=' .env | cut -d= -f2)"; WEB_PORT="${WEB_PORT:-3000}"
-if ! docker ps --format '{{.Names}}' | grep -q '^trace-web-1$' && ! port_free "$WEB_PORT"; then
+# The port is fine if it is held by this install's own web container (re-running the installer).
+own_web="$(docker ps -q --filter "label=com.docker.compose.project=${COMPOSE_PROJECT_NAME:-trace}" \
+  --filter "label=com.docker.compose.service=web")"
+if [ -z "$own_web" ] && ! port_free "$WEB_PORT"; then
   for candidate in 3300 3333 3456 3999; do
     if port_free "$candidate"; then WEB_PORT="$candidate"; break; fi
   done
