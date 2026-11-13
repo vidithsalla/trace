@@ -135,6 +135,13 @@ instead of *contradicted*. Support labels on the 18 fixed pairs were identical (
 Neither change is unsafe, but single-run end-to-end numbers on 5 questions carry real noise;
 repeated runs with variance reporting are on the list below.
 
+## Query plans at 3,000 spans
+
+[docs/retrieval-plans.md](docs/retrieval-plans.md) has the full `EXPLAIN (ANALYZE, BUFFERS)`
+output. Right after a bulk insert, stale planner statistics made the semantic query take 482 ms
+(nested loops); after `ANALYZE`, 1.9 ms. The worker now refreshes statistics after each publish.
+No ANN index: exact search is fast enough at this size.
+
 ## What changed during development
 
 The first local-model run (prompt `claims-v1`) **abstained on all 5 end-to-end questions** while
@@ -163,4 +170,4 @@ eval harness now stamps such runs `-dirty`.
 - Hosted models, for comparison with the local 7B model.
 - Repeated runs with variance (see run-to-run variation above).
 - Alert precision of the new-evidence detector on a realistic corpus.
-- Retrieval at a scale where an ANN index would matter.
+- Retrieval beyond a few thousand spans, where an ANN index might matter.

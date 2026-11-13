@@ -18,6 +18,8 @@ What Trace does not do, or does only partially. Kept current with the code.
 
 - V3 retrieval runs in SQL (full-text and pgvector exact search). The V1 search screen still ranks
   vectors in Python over loaded chunks.
+- Query plans were measured up to 3,000 spans per matter (docs/retrieval-plans.md); larger
+  matters are untested.
 - Counterevidence search is lexical (anchor terms plus a fixed list of qualification words) fused
   with semantic neighbours. It is not exhaustive and the UI says so.
 - The new-evidence detector (`overlap-v1`) is a lexical overlap heuristic. It can miss relevant

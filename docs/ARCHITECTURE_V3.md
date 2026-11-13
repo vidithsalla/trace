@@ -72,8 +72,9 @@ document published mid-run cannot leak into it, and the run can be reconstructed
 | `semantic_exact_v2` | all-MiniLM-L6-v2 via Ollama, exact pgvector `<=>` in SQL |
 | `semantic_hybrid_v2` | Lexical + semantic, RRF k=60 (default when Ollama embeddings are configured) |
 
-Exact scan is used on purpose: matters are small, and an ANN index is an optimization to add only
-when measured latency calls for it.
+Exact scan is used on purpose: at 3,000 spans the semantic query takes 1.9 ms with fresh planner
+statistics ([query plans](retrieval-plans.md)). The worker runs `ANALYZE` after each publish because
+stale statistics right after a bulk upload made the same query take 482 ms.
 
 **Counterevidence pass.** For each proposed claim, a second search looks for spans that share
 the claim's anchors (identifiers, names) *and* contain qualification or reversal language
