@@ -23,10 +23,18 @@ class Settings(BaseSettings):
     s3_secret_key: str | None = None
     s3_bucket: str = "trace-documents"
     max_upload_bytes: int = 25 * 1024 * 1024
+    # mock (tests/CI) | local (Ollama, llama.cpp, vLLM on this machine/network) | hosted
     model_provider: str = "mock"
-    model_name: str = "trace-mock-local"
-    model_base_url: str = "http://vllm:8001/v1"
-    model_timeout_seconds: int = 30
+    model_name: str = "qwen2.5:7b-instruct"
+    model_base_url: str = "http://host.docker.internal:11434/v1"
+    model_api_key: str | None = None
+    model_timeout_seconds: int = 180
+    model_max_output_tokens: int = 1500
+    model_max_retries: int = 2
+    model_structured_output: str = "json_schema"  # json_schema | json_object
+    model_max_calls_per_run: int = 12
+    # Must be explicitly true before a hosted provider may receive any document text.
+    hosted_egress_acknowledged: bool = False
     ocr_provider: str = "disabled"
     ocr_base_url: str = "http://ocr:8010"
     embedding_provider: str = "hash"

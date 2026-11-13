@@ -5,10 +5,14 @@ listed under "Verified" in the README is planned, not shipped.
 
 ## Model and inference
 
-- `OpenAICompatibleModelClient` currently delegates every call to `MockModelClient`. No real
-  model request is made by any workflow. (Being replaced in V3 PR-01.)
-- The optional `vllm` Compose service is itself a mock server (`infra/docker/mock-vllm.Dockerfile`).
-- Mock output is deterministic and keyword-driven. It is suitable for tests, not for judging quality.
+- V3 claim extraction and support assessment call a real model through one OpenAI-compatible
+  client: `local` (Ollama/llama.cpp/vLLM, default) or `hosted` (requires explicit egress
+  acknowledgement). `mock` is a deterministic rule set used only when configured (tests, CI).
+- Real-model tests are opt-in (`make test-real-model`) and are not run in CI.
+- V1 workflows (Q&A panel, chronology, entities, contradictions, memos) still run on the
+  deterministic legacy engine and are labeled `trace-legacy-deterministic` in AI-run records.
+- A 7B local model is noticeably weaker than frontier hosted models at strict JSON and at subtle
+  conditional language. Measured failure rates are reported in the eval results, not assumed.
 
 ## Retrieval
 

@@ -1,7 +1,7 @@
 [project]
 name = "trace-api"
 version = "0.1.0"
-description = "Trace - Sovereign Discovery Copilot API"
+description = "Trace API"
 requires-python = ">=3.12"
 dependencies = [
   "alembic>=1.14.0",
@@ -10,6 +10,7 @@ dependencies = [
   "dramatiq[redis]>=1.17.0",
   "email-validator>=2.2.0",
   "fastapi>=0.115.0",
+  "httpx>=0.28.1",
   "itsdangerous>=2.2.0",
   "openpyxl>=3.1.5",
   "pgvector>=0.3.6",
@@ -49,3 +50,4 @@ ignore = ["B008"]
 [tool.pytest.ini_options]
 testpaths = ["app/tests"]
 pythonpath = ["."]
+markers = ["real_model: opt-in tests that call a real model provider"]

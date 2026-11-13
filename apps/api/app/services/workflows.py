@@ -3,7 +3,6 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.models.domain import AIRun, Citation, Document, DocumentChunk, Matter, Memo
 from app.schemas.search import SearchRequest
 from app.schemas.workflow import (
@@ -30,7 +29,6 @@ from app.services.memos import (
 )
 from app.services.mock_model_client import MockModelClient
 from app.services.model_client import EvidenceItem, MemoDraft, ModelClient, ModelClientError
-from app.services.openai_compatible_model_client import OpenAICompatibleModelClient
 from app.services.search import perform_search
 
 
@@ -156,12 +154,9 @@ def _build_chronology_evidence_pack(
 
 
 def _get_model_client() -> ModelClient:
-    if settings.model_provider == "openai_compatible":
-        return OpenAICompatibleModelClient(
-            model_name=settings.model_name,
-            base_url=settings.model_base_url,
-        )
-    return MockModelClient(model_name=settings.model_name)
+    # V1 workflows run on the deterministic legacy engine regardless of TRACE_MODEL_PROVIDER.
+    # Real inference is used by the V3 claim pipeline (app.services.llm).
+    return MockModelClient(model_name="trace-legacy-deterministic")
 
 
 def _persist_citations(

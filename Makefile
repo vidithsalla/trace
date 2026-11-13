@@ -6,7 +6,7 @@ COMPOSE_FULL=docker compose --env-file .env -f infra/compose/compose.yaml -f inf
 
 API_IMAGE=trace-api
 
-.PHONY: test-docker lint-docker up up-model up-ocr up-full down logs api web worker test seed seed-raw eval eval-regression eval-all phase0-verify
+.PHONY: test-docker lint-docker test-real-model up up-model up-ocr up-full down logs api web worker test seed seed-raw eval eval-regression eval-all phase0-verify
 
 up:
 	$(COMPOSE_CORE) up --build
@@ -66,3 +66,10 @@ test-docker:
 
 lint-docker:
 	docker run --rm -v "$(CURDIR)/apps/api:/w" -w /w $(API_IMAGE) /app/.venv/bin/ruff check app
+
+# Opt-in: run real-model tests against a local Ollama (`ollama serve` on the host).
+test-real-model:
+	docker run --rm --network trace_default --env-file .env -e PYTHONPATH=/app \
+	  -e TRACE_REAL_MODEL_TESTS=1 -e TRACE_MODEL_PROVIDER=local --add-host host.docker.internal:host-gateway \
+	  -v "$(CURDIR)/apps/api/app:/app/app" -v "$(CURDIR)/apps/api/pyproject.toml:/app/pyproject.toml:ro" \
+	  $(API_IMAGE) sh -c "uv run pytest -q -p no:warnings -m real_model -s $(ARGS)"

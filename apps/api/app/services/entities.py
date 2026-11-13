@@ -8,7 +8,6 @@ from uuid import UUID
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
 from app.models.domain import AIRun, Document, DocumentChunk, Entity, EntityMention, Event, Matter
 from app.schemas.entity import (
     EntityDetailRead,
@@ -22,7 +21,6 @@ from app.services.audit import record_audit_event
 from app.services.citations import build_viewer_url
 from app.services.mock_model_client import MockModelClient
 from app.services.model_client import EvidenceItem, ModelClient
-from app.services.openai_compatible_model_client import OpenAICompatibleModelClient
 
 
 @dataclass(frozen=True, slots=True)
@@ -486,12 +484,8 @@ def _float_or_none(value: float | Decimal | None) -> float | None:
 
 
 def _get_model_client() -> ModelClient:
-    if settings.model_provider == "openai_compatible":
-        return OpenAICompatibleModelClient(
-            model_name=settings.model_name,
-            base_url=settings.model_base_url,
-        )
-    return MockModelClient(model_name=settings.model_name)
+    # V1 workflows run on the deterministic legacy engine regardless of TRACE_MODEL_PROVIDER.
+    return MockModelClient(model_name="trace-legacy-deterministic")
 
 
 def _fallback_user_id(db: Session, matter_id: UUID) -> UUID:

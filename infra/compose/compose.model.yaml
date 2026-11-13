@@ -1,21 +1,14 @@
+# Overlay: use a local model server running on the host (Ollama by default).
+# Start it with `ollama serve` (binds 127.0.0.1:11434). Data never leaves this machine.
+x-local-model: &local-model
+  TRACE_MODEL_PROVIDER: local
+  TRACE_MODEL_NAME: ${TRACE_MODEL_NAME:-qwen2.5:7b-instruct}
+  TRACE_MODEL_BASE_URL: ${TRACE_MODEL_BASE_URL:-http://host.docker.internal:11434/v1}
+
 services:
   api:
-    environment:
-      TRACE_MODEL_PROVIDER: openai_compatible
-      TRACE_MODEL_NAME: ${TRACE_MODEL_NAME:-trace-placeholder-model}
-      TRACE_MODEL_BASE_URL: ${TRACE_MODEL_BASE_URL:-http://vllm:8001/v1}
-    depends_on:
-      vllm:
-        condition: service_healthy
-
-  vllm:
-    build:
-      context: ../..
-      dockerfile: infra/docker/mock-vllm.Dockerfile
-    ports:
-      - "127.0.0.1:8001:8001"
-    healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8001/health')\" >/dev/null 2>&1 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+    environment: *local-model
+    extra_hosts: ["host.docker.internal:host-gateway"]
+  worker:
+    environment: *local-model
+    extra_hosts: ["host.docker.internal:host-gateway"]
