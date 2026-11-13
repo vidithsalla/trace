@@ -1,220 +1,122 @@
-# Trace - Sovereign Discovery Copilot
+# Trace
 
-A production-grade document analysis system with grounded AI workflows for legal discovery-style evidence review. Trace ingests matter-scoped documents, builds a searchable evidence corpus, and runs structured AI workflows that must cite and validate source material before results are trusted.
+**Evidence review that keeps track of which version of which document a finding rests on.**
 
-The project is designed as a production-style monorepo rather than a chatbot demo: it includes authentication, matter isolation, async ingestion, hybrid retrieval, citation validation, audit trails, exports, seed data, and regression tests.
+Trace proposes factual claims from a matter's documents, shows the passages for *and against*
+each one, and records a reviewer's decision against the exact source versions they saw. When a
+cited document is corrected, the old decision stays in history but is flagged and cannot pass
+for a current one. It runs on your own machine with a local model; documents never leave it.
 
-![Python 3.12](https://img.shields.io/badge/Python-3.12-blue)
-![Next.js 15](https://img.shields.io/badge/Next.js-15-black)
-![Tests](https://img.shields.io/badge/tests-56%20passing-brightgreen)
-![Status](https://img.shields.io/badge/phases%200--12-verified-brightgreen)
+![Claim inspector after the cited memo was corrected](docs/images/claim-inspector-stale.png)
 
-## What This Project Does
+> Portfolio project with synthetic data. Not legal advice, not validated by attorneys, not
+> deployed for external users. See [Known limitations](docs/KNOWN_LIMITATIONS.md).
 
-Trace lets users upload and analyze evidence within isolated legal matters. It parses files into page-aware chunks, indexes them with PostgreSQL full-text search and pgvector embeddings, retrieves relevant evidence, and runs grounded workflows for Q&A, chronologies, entities, contradictions, and issue memos.
+## Why
 
-Every material AI output is tied back to source documents through validated citations. If the system cannot validate evidence for an answer, it returns insufficient evidence rather than presenting unsupported claims.
+A real quote can still be the wrong answer. *"Invoice 7A is approved for payment subject to
+verification of delivery receipts"* is a genuine sentence; it does not support *"invoice 7A was
+approved unconditionally."* Checking that a citation exists is necessary and not enough. Trace
+keeps three questions apart and never merges them into one score:
 
-## Why This Is Not A Toy AI Project
+| | Question | Answered by |
+| --- | --- | --- |
+| 1 | Does the quoted passage exist, unchanged, in this document version and matter? | Deterministic code |
+| 2 | Do the passages support, qualify or contradict the claim? | A model's suggestion |
+| 3 | Has a reviewer accepted this claim revision with this evidence set? | A recorded human decision |
 
-- **Hybrid retrieval, not simple vector search**: Search combines Postgres full-text search, pgvector similarity, metadata filters, and reciprocal-rank fusion.
-- **Deterministic citation validation**: LLM citations are checked against stored source chunks; hallucinated quotes are not surfaced as trusted evidence.
-- **Matter-scoped isolation**: Documents, chunks, retrieval results, AI runs, citations, exports, and audit logs are all scoped to exactly one matter.
-- **Full evidence pipeline**: The system implements ingestion, parsing, chunking, embedding, retrieval, evidence assembly, model execution, validation, persistence, and viewer deep links.
-- **Workflow persistence and auditability**: AI runs, citations, chronology events, memos, exports, and audit records are persisted rather than treated as disposable chat messages.
-- **Local-first but production-shaped**: The default stack runs without a GPU or external LLM, while model and embedding providers are abstracted for private/self-hosted deployment.
+## What it does
 
-## Key Technical Highlights
+- **Immutable sources.** Every upload is a versioned, hashed artifact. Citations point at
+  `[start, end)` offsets in a specific extraction of a specific revision. A correction becomes
+  revision 2; revision 1 stays resolvable for past decisions.
+- **Pinned snapshots.** Each investigation pins the set of current versions it searched, so it
+  can be reconstructed later and is unaffected by uploads during the run.
+- **Counterevidence search.** After claims are proposed, a second search looks specifically for
+  passages that qualify or reverse them (conditions, holds, corrections, negations).
+- **Race-safe review.** Decisions carry the expected revision, evidence digest and review
+  sequence; a stale browser tab gets a conflict instead of overwriting. Reviews are append-only.
+- **Evidence drift.** Publishing a new version of a cited document marks dependent claims
+  *source superseded*; a possibly relevant new document raises a cautious *may matter* alert.
+- **Evidence packets.** JSON manifest, findings, Markdown and checksums built from stored records;
+  packets never change after creation.
+- **Local by default.** OpenAI-compatible client for Ollama, llama.cpp or vLLM. A hosted provider
+  refuses to start until you acknowledge that passages will leave the machine.
 
-- **Multi-format ingestion**: PDF, DOCX, XLSX, CSV, TXT, and image/OCR hooks with async processing through Dramatiq and Redis.
-- **Object storage boundary**: Multipart uploads stream to local object storage while computing SHA-256; raw bytes do not travel through Redis job payloads.
-- **Hybrid retrieval with RRF**: Lexical ranking and vector ranking are merged with reciprocal-rank fusion using `k=60`.
-- **Embedding provider abstraction**: Deterministic 384-dimensional hash embeddings are the default for lightweight CI and local development; `TRACE_EMBEDDING_PROVIDER=sentence_transformer` enables `sentence-transformers/all-MiniLM-L6-v2`.
-- **Grounded AI workflow layer**: Q&A, chronology, entity summaries, contradiction reports, issue memos, and citation checks use typed schemas, persistence, and validation.
-- **Evidence trust loop**: Search results and AI citations deep-link to source document pages with local text context for verification.
-- **Regression coverage**: The API suite has 56 tests across auth, ingestion, retrieval, viewer, AI workflows, exports, evals, and semantic embedding provider behavior.
+<p>
+  <img src="docs/images/investigate.png" width="49%" alt="Investigate screen with proposed claims">
+  <img src="docs/images/sources-versions.png" width="49%" alt="Sources with immutable revisions">
+</p>
 
-## Key Design Decisions
+## Install
 
-- **PostgreSQL + pgvector instead of a separate vector database**: Trace keeps relational records, matter scoping, lexical search, vector search, citations, and audit data in one transactional system. For this MVP scale, Postgres reduces operational complexity while still supporting vector similarity and full-text search.
-- **Hybrid retrieval instead of pure semantic retrieval**: Legal evidence often depends on exact names, dates, clauses, invoice IDs, and quoted language. Full-text search preserves exact-match precision, while vector search improves paraphrase recall. Reciprocal-rank fusion lets both signals contribute.
-- **Strict citation validation instead of trusting model output**: The model can propose an answer, but source validation determines whether it is safe to show. Quoted text must match source material, cited chunks must belong to the matter, and unsupported answers degrade to insufficient evidence or low confidence.
-- **Matter isolation at the data layer**: Matter boundaries are enforced through database relationships, route guards, service checks, query filters, citation validation, and tests. This prevents cross-matter leakage from becoming a UI-only concern.
-- **Mock model by default**: Local development uses `MockModelClient` so the stack can run on constrained hardware. The `OpenAICompatibleModelClient` keeps the production path open for self-hosted or private model endpoints.
+Requirements: Docker Desktop. For real local inference, [Ollama](https://ollama.com/download)
+(about 5 GB of models; 16 GB RAM recommended).
 
-## Architecture
-
-Trace is organized around three pipeline stages. Ingestion turns uploaded files into normalized pages, chunks, and embeddings. Retrieval searches the matter-scoped corpus through lexical and vector paths, then fuses ranked candidates. Grounding assembles evidence for AI workflows and validates returned citations before persisting user-visible results.
-
-```mermaid
-flowchart LR
-    subgraph Apps
-        W[Next.js Web] --> A[FastAPI API]
-    end
-
-    subgraph Ingestion
-        A --> U[Upload]
-        U --> M[Object storage]
-        U --> Q[Dramatiq Queue]
-        Q --> WK[Worker]
-        WK --> P[Parser]
-        P --> PG[Pages]
-        PG --> C[Chunker]
-        C --> E[Embeddings]
-        E --> V[(PostgreSQL + pgvector)]
-    end
-
-    subgraph Retrieval
-        S[Query] --> F[Lexical FTS]
-        S --> VS[Vector Search]
-        F --> RRF[RRF Fusion]
-        VS --> RRF
-        RRF --> RR[Ranked Results]
-    end
-
-    subgraph Grounding
-        RR --> EA[Evidence Assembly]
-        EA --> MC[ModelClient]
-        MC --> CV[Citation Validation]
-        CV --> GA[Grounded Answer]
-    end
+```bash
+git clone https://github.com/vidithsalla/trace.git
+cd trace
+ollama serve &          # optional: skip to use the labeled mock model
+./install.sh            # Windows: .\install.ps1
 ```
 
-## Tech Stack
+The installer writes a `.env` with generated secrets, pulls `qwen2.5:7b-instruct` and
+`all-minilm:l6-v2` if Ollama is running, builds the containers, and loads two synthetic demo
+matters. Then open the printed URL and sign in as `reviewer@trace.local` / `trace-demo-password`.
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | Next.js 15, TypeScript |
-| Backend | FastAPI, Python 3.12 |
-| Database | PostgreSQL 16 + pgvector |
-| Object Storage | Local filesystem volume (default) or S3-compatible |
-| Task Queue | Dramatiq + Redis 7 |
-| Search | Postgres FTS + pgvector cosine + RRF |
-| Embeddings | Default hash provider, optional sentence-transformer provider |
-| Auth | Argon2 hashing, API-owned session cookies |
-| Containerization | Docker Compose |
-| Testing | pytest, 56 tests, pnpm typecheck |
-
-## Document Analysis Pipeline
-
-### Ingestion
-
-Multipart upload streams files to object storage in bounded chunks while computing SHA-256. The API enqueues a Dramatiq job with the document ID only, so raw bytes do not travel through Redis. The worker parses each file with format-specific parsers, persists page-level raw and normalized text, chunks at roughly 800 tokens with 150-token overlap while preserving page boundaries, embeds each chunk, and stores vectors in pgvector.
-
-### Retrieval
-
-Trace runs two retrieval paths: Postgres full-text search with `to_tsvector`, `plainto_tsquery`, and `ts_rank_cd`, plus pgvector cosine similarity against the query embedding. Results are merged with reciprocal-rank fusion using `k=60`. Every retrieval query enforces matter scope before ranking and supports filters for document IDs, file types, document types, date ranges, entity names, and source names.
-
-### Embeddings
-
-The default `LocalHashEmbeddingClient` produces deterministic 384-dimensional vectors for lightweight development and CI. Semantic mode is opt-in with `TRACE_EMBEDDING_PROVIDER=sentence_transformer` and `sentence-transformers/all-MiniLM-L6-v2`, which preserves the existing 384-dimensional pgvector schema. Documents must be re-ingested or re-embedded after changing providers.
-
-### Grounding
-
-Model output is post-processed through deterministic citation validation. Every cited chunk, document, and page must exist in the queried matter, and every quoted string must match source text. If no citations validate, Trace returns insufficient evidence instead of an unsupported answer. Single-citation answers are low confidence; high-confidence factual answers require corroborating validated citations when available.
-
-## AI Workflows
-
-| Workflow | What It Does |
-|----------|--------------|
-| Grounded Q&A | Matter-scoped question answering with validated citations and confidence scoring |
-| Chronology Builder | Citation-backed timeline events with date normalization and dispute flags |
-| Entity Summarizer | Evidence-backed profiles for people, organizations, and key concepts with mention tracing |
-| Contradiction Finder | Conflicting claims with side-by-side evidence and severity labels |
-| Issue Memo Generator | First-pass legal memos with supporting facts, contrary facts, gaps, and next-review recommendations |
-| Citation Checker | Deterministic validation of LLM citations against source material |
-
-## Project Structure
-
-```text
-trace/
-├── apps/
-│   ├── web/          # Next.js 15 frontend
-│   ├── api/          # FastAPI backend: routes, services, models, schemas, tests
-│   └── worker/       # Dramatiq async worker
-├── packages/
-│   ├── types/        # Shared TypeScript contracts
-│   └── ui/           # Shared UI primitives
-├── infra/
-│   ├── compose/      # Docker Compose core stack plus model/OCR overlays
-│   ├── docker/       # Dockerfiles
-│   └── scripts/      # Boot and verification scripts
-├── seed_data/        # Synthetic source documents
-├── seed_truth/       # Truth maps and eval fixtures
-├── docs/             # Public architecture, local dev, schema, and design docs
-└── ROADMAP.md        # 13-phase system design and execution tracker
+```bash
+./trace.sh stop | start | status | logs | uninstall
 ```
 
-## Quick Start
+Only the web UI is published, and only on `127.0.0.1`. Walk-through: [docs/DEMO.md](docs/DEMO.md).
 
-1. Clone the repo and copy `.env.example` to `.env`.
-2. Run `make up` to boot the core stack: web, API, worker, Postgres and Redis.
-3. Run `make seed` to load the Acme Industrial v. Northshore Supply demo matter.
-4. Open `http://localhost:3000` and sign in with seeded credentials from `docs/local_dev.md`.
-5. Run `make eval` to execute the Acme eval harness against the seeded data.
+## Results
 
-### Available Commands
+Measured on a small synthetic dispute written for this project (5 end-to-end questions,
+18 hand-labeled claim/passage pairs, author-labeled, no held-out split). These numbers show the
+mechanism, not accuracy on real matters. Full tables and failure analysis: [RESULTS.md](RESULTS.md).
 
-| Command | Description |
-|---------|-------------|
-| `make up` | Boot the lightweight core stack |
-| `make up-full` | Boot with model and OCR overlays |
-| `make down` | Stop all services |
-| `make seed` | Fast demo bootstrap with processed artifacts |
-| `make seed-raw` | Raw-ingestion seed flow |
-| `make test` | Run the local API pytest suite when Python dependencies are installed |
-| `make eval` | Run the Acme MVP eval |
-| `make eval-all` | Run Acme plus all regression corpora |
+| Check | Deterministic mock | Local `qwen2.5:7b-instruct` |
+| --- | --- | --- |
+| Support labels correct on fixed pairs | 9 / 18 | 16 / 18 |
+| Unsafe "supports" on non-supporting pairs | 2 / 12 | 0 / 12 |
+| End-to-end claims with verified sources | 5 / 5 | 11 / 11 |
+| Unanswerable question answered as supported | yes (flagged) | no ("not established") |
+| Opposing passages reaching the reviewer (lexical retrieval, model-independent) | 4/4 with the counterevidence search, 3/4 without | same |
+| Accepted claim flagged after its source was corrected (deterministic) | 1 / 1 | same |
 
-## End-to-End Demo
+The most useful finding was a failure: the first local-model version abstained on every question
+because of JSON field order under constrained decoding. The fix is in RESULTS.md.
 
-1. Sign in as a seeded attorney.
-2. Open the Acme Industrial v. Northshore Supply matter.
-3. Browse uploaded documents with ingest status badges.
-4. Search for `defect knowledge before shipment` and inspect snippets and scores.
-5. Click a result to open the exact source page in the document viewer.
-6. Ask `What evidence suggests Northshore knew of the defect before shipment?`
-7. Click a citation to verify it against the source document.
-8. Generate a chronology and inspect entity pages.
-9. Run contradiction analysis and generate an issue memo.
-10. Export an artifact and view the AI run record plus audit trail.
+## Engineering notes
 
-## What I Would Improve Next
+- **Stack:** Next.js 15, FastAPI, PostgreSQL 16 + pgvector, Redis + Dramatiq, filesystem object
+  storage, Ollama. All in Docker Compose with lockfiles.
+- **Matter isolation** is enforced three times: route membership checks, `matter_id` filters in
+  SQL before any text is read, and composite `(matter_id, id)` foreign keys.
+- **Immutability** of published text, offsets, claim revisions, evidence and review events is
+  enforced by database triggers, not only application code.
+- **Tests:** 114 API tests (pytest against real Postgres) including a threaded race between two
+  reviewers, crash-before-commit ingestion, cross-matter access attempts, prompt injection, and
+  packet tampering. CI runs them on every push without any model credentials.
 
-- **Stronger embedding models**: `all-MiniLM-L6-v2` is a practical CPU-friendly baseline, but legal retrieval would benefit from stronger domain-aware or self-hosted embedding models.
-- **Reranking layer**: Add a cross-encoder or lightweight reranker after first-stage retrieval to improve ordering of evidence candidates.
-- **HNSW indexing**: Add pgvector HNSW indexes for larger corpora once the dataset size justifies approximate nearest-neighbor tuning.
-- **Larger eval datasets**: Expand beyond the current synthetic truth packs with more varied document formats, noisy OCR cases, and adversarial citation checks.
-- **More robust OCR path**: The OCR service boundary exists, but production usage would need more extensive scanned-document evaluation and operational hardening.
-- **Deployment hardening**: Add production deployment templates, secret management, backup/restore flows, and observability dashboards.
+Read more: [Architecture](docs/ARCHITECTURE_V3.md) · [Security](SECURITY.md) ·
+[Known limitations](docs/KNOWN_LIMITATIONS.md) · [Evaluation](evals/README.md)
 
-## Design Docs
+## Development
 
-- [docs/pre_build_decisions.md](./docs/pre_build_decisions.md): implementation defaults and architecture rationale.
-- [docs/schema_and_seeds.md](./docs/schema_and_seeds.md): database schema, seed data, and truth-map expectations.
-- [docs/architecture.md](./docs/architecture.md): system architecture and local topology.
-- [docs/local_dev.md](./docs/local_dev.md): local setup, Docker Compose usage, and lightweight development mode.
-- [ROADMAP.md](./ROADMAP.md): 13-phase execution roadmap and verification tracker.
+```bash
+make up                 # stack with API/Postgres/Redis also published on localhost
+make test-docker        # API tests against the running stack
+make lint-docker        # ruff
+make web-check          # typecheck + production build
+make test-real-model    # opt-in: real Ollama smoke test
+make eval-v3 ARGS="--engines mock,local --profiles all"
+```
 
-## Extending To Full Product
+Earlier versions of Trace (grounded Q&A, chronology, entities, contradictions, issue memos) are
+still available under **More tools** in each matter, running on a deterministic engine.
 
-Trace is currently a public portfolio project and production-style local system. Phase 13 in [ROADMAP.md](./ROADMAP.md) documents future product launch work: public landing page, deployment options, invite-only access, and external-user onboarding.
+## License
 
-## Roadmap Overview
-
-| Phase | Description | Status |
-|-------|-------------|--------|
-| 0 | Repo, Docker, local platform | Verified |
-| 1 | Auth, orgs, matters, RBAC | Verified |
-| 2 | Upload and ingestion skeleton | Verified |
-| 3 | Parsing, OCR, chunks, embeddings, search | Verified |
-| 4 | Document viewer and citation trust loop | Verified |
-| 5 | Grounded Q&A with citation validation | Verified |
-| 6 | Chronology builder | Verified |
-| 7 | Entity and witness layer | Verified |
-| 8 | Contradiction finder | Verified |
-| 9 | Issue memo generator | Verified |
-| 10 | Exports, audit, seed modes, evals | Verified |
-| 11 | Eval breadth with regression corpora | Verified |
-| 12 | Semantic retrieval upgrade | Verified |
-| 13 | Product launch path | Designed |
+No license file yet; all rights reserved by the author until one is added.

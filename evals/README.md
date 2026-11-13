@@ -12,4 +12,10 @@ Rules:
 
 | Dataset | Purpose | Status |
 | --- | --- | --- |
-| `conditional-payment-v1` | Four core failure modes: correct quote vs wrong conclusion, omitted counterevidence, stale source, wrong entity | Fixture only |
+| `conditional-payment-v1` | Correct quote vs wrong conclusion, omitted counterevidence, stale source, wrong entity, unanswerable question, prompt injection; 6 cases + 18 labeled claim/passage pairs | Used by `make eval-v3`; results in `RESULTS.md` |
+
+Run: `make eval-v3 ARGS="--engines mock,local --profiles all"` (stack up; local engine needs
+`ollama serve`). Stages are reported separately: retrieval, counterevidence, support labels,
+end-to-end, drift. Each run writes `manifest.json` (code SHA, `-dirty` if the tree had
+uncommitted changes, dataset SHA-256, models, prompt version, runtime versions) and
+`metrics.json` with per-query rows.

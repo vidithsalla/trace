@@ -1,0 +1,42 @@
+{
+  "run_id": "20261113T064837Z-cbee874",
+  "scoring_version": "trace-eval-v3.1",
+  "code_sha": "cbee874",
+  "dataset_id": "conditional-payment-v1",
+  "dataset_sha256": "d06c0677bc344edae9d5cdb56ebc0aa4d8af4d92f91d5b039b98e74dccdbb380",
+  "label_author": "human (project author)",
+  "retrieval_profiles": [
+    "lexical_v1",
+    "hash_hybrid_baseline",
+    "semantic_exact_v2",
+    "semantic_hybrid_v2"
+  ],
+  "end_to_end_profile": "semantic_hybrid_v2",
+  "k": 8,
+  "engines": {
+    "mock": {
+      "provider_kind": "mock",
+      "model": "trace-mock-claims",
+      "prompt_version": "claims-v3"
+    },
+    "local": {
+      "provider_kind": "local",
+      "model": "qwen2.5:7b-instruct",
+      "endpoint_class": "loopback",
+      "structured_output": "json_schema",
+      "temperature": 0.0,
+      "max_output_tokens": 1500,
+      "prompt_version": "claims-v3"
+    }
+  },
+  "embedding_profiles": [
+    "hash-v1",
+    "minilm-l6-v2-ollama"
+  ],
+  "runtime": {
+    "python": "3.12.16",
+    "postgres": "16.15 (Debian 16.15-1.pgdg12+2)",
+    "ollama": "0.40.16"
+  },
+  "started_at": "20261113T064837Z"
+}
