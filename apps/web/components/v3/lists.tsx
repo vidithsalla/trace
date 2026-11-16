@@ -35,7 +35,7 @@ export function ReviewQueue({ matterId }: { matterId: string }) {
       <div className="mb-3 flex flex-wrap gap-1">
         {FILTERS.map(([value, label]) => (
           <button key={value} onClick={() => setFilter(value)}
-            className={`rounded-md px-2.5 py-1 text-sm ${filter === value ? "bg-[var(--subtle)] font-medium" : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"}`}>
+            className={`border-b-2 px-2.5 pb-1.5 pt-1 text-[13px] ${filter === value ? "border-[var(--primary)] font-medium" : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]"}`}>
             {label}
           </button>
         ))}
@@ -44,9 +44,9 @@ export function ReviewQueue({ matterId }: { matterId: string }) {
       {!claims ? <Spinner /> : claims.length === 0 ? (
         <Empty title="No claims here">Run an investigation to propose claims.</Empty>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)]">
-          <table className="w-full text-sm">
-            <thead className="border-b border-[var(--border)] bg-[var(--subtle)] text-left text-xs text-[var(--muted-foreground)]">
+        <div className="overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface)]">
+          <table className="w-full text-[13px]">
+            <thead className="label-caps border-b border-[var(--border)] text-left">
               <tr>
                 <th className="px-4 py-2 font-medium">Claim</th>
                 <th className="px-3 py-2 font-medium">Sources</th>
@@ -60,12 +60,12 @@ export function ReviewQueue({ matterId }: { matterId: string }) {
                 <tr key={claim.id} className="hover:bg-[var(--subtle)]">
                   <td className="max-w-md px-4 py-2.5">
                     <Link href={`/matters/${matterId}/claims/${claim.id}` as never} className="font-medium hover:underline">{claim.text}</Link>
-                    <div className="mt-1 flex gap-1.5"><AttentionBadges claim={claim} />{claim.revision > 1 ? <Badge>rev {claim.revision}</Badge> : null}</div>
+                    <div className="mt-1 flex gap-x-4"><AttentionBadges claim={claim} />{claim.revision > 1 ? <Badge>rev {claim.revision}</Badge> : null}</div>
                   </td>
                   <td className="px-3 py-2.5"><GateBadge state={claim.source_gate_state} /></td>
                   <td className="px-3 py-2.5"><CandidateBadge candidate={claim.relation_candidate} /></td>
                   <td className="px-3 py-2.5"><ReviewBadge state={claim.review_state} stale={claim.basis_state !== "CURRENT"} /></td>
-                  <td className="whitespace-nowrap px-3 py-2.5 text-xs text-[var(--muted-foreground)]">{timeAgo(claim.updated_at)}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-[12px] text-[var(--muted-foreground)]">{timeAgo(claim.updated_at)}</td>
                 </tr>
               ))}
             </tbody>
@@ -118,10 +118,10 @@ export function ChangesList({ matterId }: { matterId: string }) {
               <Panel key={row.id}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2"><Badge tone={kind.tone}>{kind.label}</Badge><span className="text-xs text-[var(--muted-foreground)]">{timeAgo(row.created_at)}</span></div>
+                    <div className="flex items-center gap-2"><Badge tone={kind.tone}>{kind.label}</Badge><span className="text-[12px] text-[var(--muted-foreground)]">{timeAgo(row.created_at)}</span></div>
                     <Link href={`/matters/${matterId}/claims/${row.claim_id}` as never} className="mt-1.5 block font-medium hover:underline">{row.claim.text}</Link>
-                    <p className="mt-1 text-sm text-[var(--muted-foreground)]">{kind.explain(row.detail)}</p>
-                    <div className="mt-2 flex gap-1.5"><ReviewBadge state={row.claim.review_state} stale={row.claim.basis_state !== "CURRENT"} /></div>
+                    <p className="mt-1 text-[13px] text-[var(--muted-foreground)]">{kind.explain(row.detail)}</p>
+                    <div className="mt-2 flex gap-x-4"><ReviewBadge state={row.claim.review_state} stale={row.claim.basis_state !== "CURRENT"} /></div>
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <Button disabled={busy === row.id} onClick={() => run(row.id, () => apiPost(`matters/${matterId}/claims/${row.claim_id}/revisions`, { expected_claim_revision: row.claim.revision }))}>
@@ -190,7 +190,7 @@ export function SourcesList({ matterId }: { matterId: string }) {
           {rows.map((doc) => (
             <Panel key={doc.id} title={<Link className="hover:underline" href={`/matters/${matterId}/documents/${doc.id}` as never}>{doc.title}</Link>}
               actions={<FilePick label="Upload new version" onPick={(f) => upload(f, doc)} />} padded={false}>
-              <table className="w-full table-fixed text-sm">
+              <table className="w-full table-fixed text-[13px]">
                 <colgroup>
                   <col className="w-28" /><col className="w-32" /><col /><col className="w-48" /><col className="w-44" /><col className="w-24" />
                 </colgroup>
@@ -200,9 +200,9 @@ export function SourcesList({ matterId }: { matterId: string }) {
                       <td className="px-4 py-2 font-medium">Revision {v.revision_no}</td>
                       <td className="px-3 py-2"><VersionState version={v} current={doc.current_version_id === v.id} /></td>
                       <td className="truncate px-3 py-2 text-[var(--muted-foreground)]">{v.change_note ?? v.file_name}</td>
-                      <td className="px-3 py-2 text-xs text-[var(--muted-foreground)]">{v.span_count} passages{v.warnings.length ? ` · ${v.warnings.join(", ").toLowerCase()}` : ""}</td>
+                      <td className="px-3 py-2 text-[12px] text-[var(--muted-foreground)]">{v.span_count} passages{v.warnings.length ? ` · ${v.warnings.join(", ").toLowerCase()}` : ""}</td>
                       <td className="px-3 py-2"><Mono>{v.source_sha256 ? `sha256 ${v.source_sha256.slice(0, 12)}` : "hash unknown (legacy)"}</Mono></td>
-                      <td className="whitespace-nowrap px-4 py-2 text-right text-xs text-[var(--muted-foreground)]">{timeAgo(v.created_at)}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-right text-[12px] text-[var(--muted-foreground)]">{timeAgo(v.created_at)}</td>
                     </tr>
                   ))}
                   {doc.versions.length === 0 ? <tr><td className="px-4 py-2 text-[var(--muted-foreground)]">Processing…</td></tr> : null}
@@ -226,7 +226,7 @@ function VersionState({ version, current }: { version: Version; current: boolean
 
 function FilePick({ label, onPick }: { label: string; onPick: (f: File) => void }) {
   return (
-    <label className="inline-flex h-8 cursor-pointer items-center rounded-md border border-[var(--border-strong)] bg-[var(--surface)] px-3 text-sm font-medium hover:bg-[var(--subtle)]">
+    <label className="inline-flex h-8 cursor-pointer items-center rounded-[5px] border border-[var(--border)] bg-[var(--surface)] px-3 text-[13px] font-medium hover:bg-[var(--subtle)]">
       {label}
       <input type="file" className="sr-only" accept=".pdf,.docx,.xlsx,.csv,.txt"
         onChange={(e) => { const f = e.target.files?.[0]; if (f) onPick(f); e.target.value = ""; }} />
@@ -277,15 +277,15 @@ export function Packets({ matterId }: { matterId: string }) {
       {error ? <div className="mb-3"><Notice tone="bad">{error}</Notice></div> : null}
       <div className="grid gap-6 lg:grid-cols-2">
         <Panel title="New packet" actions={
-          <label className="flex items-center gap-1.5 text-xs text-[var(--muted-foreground)]">
+          <label className="flex items-center gap-1.5 text-[12px] text-[var(--muted-foreground)]">
             <input type="checkbox" checked={includeAll} onChange={(e) => { setIncludeAll(e.target.checked); setSelected(new Set()); }} />
             Include unreviewed and stale claims (labeled)
           </label>}>
-          {visible.length === 0 ? <p className="text-sm text-[var(--muted-foreground)]">No claims are accepted against current sources yet.</p> : (
+          {visible.length === 0 ? <p className="text-[13px] text-[var(--muted-foreground)]">No claims are accepted against current sources yet.</p> : (
             <ul className="space-y-1.5">
               {visible.map((c) => (
                 <li key={c.id}>
-                  <label className="flex items-start gap-2 text-sm">
+                  <label className="flex items-start gap-2 text-[13px]">
                     <input type="checkbox" className="mt-1" checked={selected.has(c.id)}
                       onChange={(e) => { const next = new Set(selected); if (e.target.checked) next.add(c.id); else next.delete(c.id); setSelected(next); }} />
                     <span>{c.text}{!exportable(c) ? <span className="ml-1.5"><ReviewBadge state={c.review_state} stale={c.basis_state !== "CURRENT"} /></span> : null}</span>
@@ -299,16 +299,16 @@ export function Packets({ matterId }: { matterId: string }) {
           </Button>
         </Panel>
         <Panel title="Created packets" padded={false}>
-          {!packets ? <div className="p-4"><Spinner /></div> : packets.length === 0 ? <p className="px-4 py-6 text-sm text-[var(--muted-foreground)]">None yet.</p> : (
+          {!packets ? <div className="p-4"><Spinner /></div> : packets.length === 0 ? <p className="px-4 py-6 text-[13px] text-[var(--muted-foreground)]">None yet.</p> : (
             <ul className="divide-y divide-[var(--border)]">
               {packets.map((p) => (
-                <li key={p.id} className="px-4 py-3 text-sm">
+                <li key={p.id} className="px-4 py-3 text-[13px]">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{p.claim_count} finding{p.claim_count === 1 ? "" : "s"}</span>
-                    <span className="text-xs text-[var(--muted-foreground)]">{p.created_at ? timeAgo(p.created_at) : ""}</span>
+                    <span className="text-[12px] text-[var(--muted-foreground)]">{p.created_at ? timeAgo(p.created_at) : ""}</span>
                   </div>
                   <p className="mt-0.5"><Mono>manifest sha256 {p.manifest_sha256.slice(0, 16)}</Mono></p>
-                  <div className="mt-1.5 flex flex-wrap gap-3 text-xs">
+                  <div className="mt-1.5 flex flex-wrap gap-3 text-[12px]">
                     {Object.keys(p.files).map((name) => (
                       <a key={name} className="underline underline-offset-2" href={`/api/v3/matters/${matterId}/packets/${p.id}/files/${name}`}>{name}</a>
                     ))}

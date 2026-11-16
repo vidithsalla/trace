@@ -64,9 +64,9 @@ export function ClaimInspector({ matterId, claimId, revision }: { matterId: stri
         <Link href={`/matters/${matterId}/review` as never} className="hover:text-[var(--foreground)]">Review</Link>
         <span className="mx-1.5">/</span>Claim
       </nav>
-      {claim.question ? <p className="mb-1 text-sm text-[var(--muted-foreground)]">Question: {claim.question}</p> : null}
-      <h1 className="text-lg font-semibold leading-snug tracking-tight">{claim.viewing_text}</h1>
-      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-[var(--muted-foreground)]">
+      {claim.question ? <p className="mb-2 text-[13px] text-[var(--muted-foreground)]">Question: {claim.question}</p> : null}
+      <h1 className="max-w-4xl font-serif text-[23px] leading-[1.3] font-normal tracking-[-0.01em]">{claim.viewing_text}</h1>
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[var(--muted-foreground)]">
         <span>Revision {claim.viewing_revision} of {claim.revision}</span>
         <AttentionBadges claim={claim} />
       </div>
@@ -81,7 +81,7 @@ export function ClaimInspector({ matterId, claimId, revision }: { matterId: stri
       ) : null}
 
       {/* The three trust layers, always side by side and never merged. */}
-      <div className="mt-5 grid gap-3 md:grid-cols-3">
+      <div className="mt-6 grid overflow-hidden rounded-md border border-[var(--border)] bg-[var(--surface)] md:grid-cols-3 md:divide-x md:divide-[var(--border)]">
         <Layer label="1 · Source integrity" badge={<GateBadge state={claim.viewing_source_gate_state} />}>
           {claim.viewing_source_gate_state === "VERIFIED"
             ? "Every cited passage exists unchanged in the stated document version."
@@ -115,12 +115,12 @@ export function ClaimInspector({ matterId, claimId, revision }: { matterId: stri
         </div>
       ) : null}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_340px]">
         <div className="space-y-5">
           {groups.map(([role, items]) => (
             <section key={role}>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                {ROLE_LABEL[role]} <span className="font-normal text-[var(--muted-foreground)]">{items.length}</span>
+              <h2 className="label-caps mb-2.5 flex items-center gap-2">
+                {ROLE_LABEL[role]} <span className="font-mono font-normal tracking-normal">{items.length}</span>
               </h2>
               <div className="space-y-2">
                 {items.map((item) => <Passage key={item.source.source_span_id} matterId={matterId} item={item} />)}
@@ -150,10 +150,10 @@ export function ClaimInspector({ matterId, claimId, revision }: { matterId: stri
 
 function Layer({ label, badge, children }: { label: string; badge: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3">
-      <p className="text-xs font-medium text-[var(--muted-foreground)]">{label}</p>
-      <div className="mt-1.5">{badge}</div>
-      <p className="mt-2 text-xs text-[var(--muted-foreground)]">{children}</p>
+    <div className="px-4 py-3.5">
+      <p className="label-caps">{label}</p>
+      <div className="mt-2">{badge}</div>
+      <p className="mt-1.5 text-[12px] leading-relaxed text-[var(--muted-foreground)]">{children}</p>
     </div>
   );
 }
@@ -167,7 +167,7 @@ function AlertBanner({ kind, detail, busy, onRecheck, onDismiss }: {
       ? "A newly added document mentions the same subject and may change this finding. Trace has not decided either way."
       : "The claim text changed after a decision. The new revision needs its own review.";
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--warn-border)] bg-[var(--warn-bg)] px-3 py-2 text-sm text-[var(--warn)]">
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-r-[5px] border-l-2 border-[#c08a2a] bg-[var(--warn-bg)] px-4 py-3 text-[13px] text-[#5b4a2a]">
       <span>{text}</span>
       <span className="flex gap-2">
         {kind !== "STALE_CLAIM" ? <Button disabled={busy} onClick={onRecheck}>Re-check against current sources</Button> : null}
@@ -191,8 +191,8 @@ function Passage({ matterId, item }: { matterId: string; item: EvidenceView }) {
     ? `${s.context_after.slice(0, 160).replace(/\s\S*$/, "")}…`
     : s.context_after;
   return (
-    <article className="rounded-lg border border-[var(--border)] bg-[var(--surface)]">
-      <header className="flex flex-wrap items-center gap-2 border-b border-[var(--border)] px-3 py-2 text-xs">
+    <article className="rounded-md border border-[var(--border)] bg-[var(--surface)]">
+      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[var(--border)] px-4 py-2 text-[12px]">
         <Link href={`/matters/${matterId}/documents/${s.document_id}` as never} className="font-medium hover:underline">
           {s.document_title ?? "Document"}
         </Link>
@@ -203,12 +203,12 @@ function Passage({ matterId, item }: { matterId: string; item: EvidenceView }) {
         {item.reason_code ? <span className="text-[var(--muted-foreground)]">{REASON_LABEL[item.reason_code] ?? item.reason_code}</span> : null}
         {item.quote_integrity !== "VERIFIED" ? <Badge tone="bad">{item.integrity_reason ?? item.quote_integrity}</Badge> : null}
       </header>
-      <p className="quote px-3 py-2.5 text-sm leading-relaxed">
+      <p className="quote px-4 py-3 text-[13px] leading-[1.65]">
         <span className="text-[var(--muted-foreground)]">{before}</span>
         {highlight(s.text)}
         <span className="text-[var(--muted-foreground)]">{after}</span>
       </p>
-      <footer className="border-t border-[var(--border)] px-3 py-1.5">
+      <footer className="border-t border-[var(--border)] px-4 py-1.5">
         <Mono>chars {s.start}–{s.end} · sha256 {s.quote_sha256.slice(0, 12)} · {item.evidence_ref}</Mono>
       </footer>
     </article>
@@ -245,11 +245,11 @@ function DecisionPanel({ claim, busy, onSubmit }: { claim: ClaimDetail; busy: bo
   ] as const;
   return (
     <Panel title="Record a decision">
-      <div className="grid grid-cols-3 gap-1 rounded-md bg-[var(--subtle)] p-1" role="radiogroup" aria-label="Decision">
+      <div className="grid grid-cols-3 gap-0.5 rounded-[5px] bg-[var(--subtle)] p-0.5" role="radiogroup" aria-label="Decision">
         {options.map(([value, label]) => (
           <button key={value} type="button" role="radio" aria-checked={decision === value}
             onClick={() => setDecision(value)}
-            className={`rounded px-1 py-1 text-xs font-medium ${decision === value ? "bg-[var(--surface)] shadow-sm" : "text-[var(--muted-foreground)]"}`}>
+            className={`rounded-[4px] px-1 py-1.5 text-[12px] font-medium leading-tight ${decision === value ? "bg-[var(--surface)] text-[var(--foreground)] shadow-[0_0_0_1px_var(--border)]" : "text-[var(--muted-foreground)]"}`}>
             {label}
           </button>
         ))}

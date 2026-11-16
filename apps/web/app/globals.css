@@ -3,40 +3,46 @@
 @theme {
   --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto,
     "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Iowan Old Style", "Charter", "Source Serif Pro", Georgia, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --radius-3xl: 0.625rem;
-  --radius-2xl: 0.5rem;
-  --radius-xl: 0.5rem;
+  --radius-3xl: 0.375rem;
+  --radius-2xl: 0.375rem;
+  --radius-xl: 0.375rem;
+  --radius-lg: 0.375rem;
+  --radius-md: 0.3125rem;
 }
 
+/* A quiet, paper-and-ink palette for reading evidence: warm neutrals, hairline
+   borders, one deep green for actions, and status shown as a colored dot plus
+   a word rather than filled pills. */
 :root {
   /* Surfaces and text */
-  --background: #fafafa;
-  --surface: #ffffff;
-  --subtle: #f4f4f5;
-  --foreground: #18181b;
-  --muted-foreground: #71717a;
-  --border: #e4e4e7;
-  --border-strong: #d4d4d8;
-  --ring: #2563eb;
+  --background: #f6f5f1;
+  --surface: #fffefb;
+  --subtle: #efede6;
+  --foreground: #1d1c1a;
+  --muted-foreground: #77726a;
+  --border: #e5e1d8;
+  --border-strong: #d3cdc0;
+  --ring: #1f4a44;
 
-  /* Primary action: near-black, like most developer dashboards */
-  --primary: #18181b;
-  --primary-hover: #27272a;
+  /* Primary action: Trace's deep green */
+  --primary: #1f4a44;
+  --primary-hover: #173a35;
 
-  /* Status: muted, readable, never neon */
-  --ok: #15803d;
-  --ok-bg: #f0fdf4;
-  --ok-border: #bbf7d0;
-  --warn: #a16207;
-  --warn-bg: #fefce8;
-  --warn-border: #fde68a;
-  --bad: #b91c1c;
-  --bad-bg: #fef2f2;
-  --bad-border: #fecaca;
-  --info: #1d4ed8;
-  --info-bg: #eff6ff;
-  --info-border: #bfdbfe;
+  /* Status: text colors; backgrounds are kept for the few tinted notes */
+  --ok: #2f6b4f;
+  --ok-bg: #eef4ef;
+  --ok-border: #cfe0d4;
+  --warn: #94620f;
+  --warn-bg: #faf4e6;
+  --warn-border: #ead9b3;
+  --bad: #a3392b;
+  --bad-bg: #f9ecea;
+  --bad-border: #ebcac4;
+  --info: #2f5a87;
+  --info-bg: #eef3f8;
+  --info-border: #cbd9e8;
 
   /* Tokens used by the pre-V3 screens, mapped onto the new palette */
   --panel: var(--surface);
@@ -59,6 +65,7 @@ body {
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
+  font-feature-settings: "kern", "liga";
   -webkit-font-smoothing: antialiased;
 }
 
@@ -73,7 +80,7 @@ a {
 }
 
 ::selection {
-  background: #dbeafe;
+  background: #d9e6e1;
 }
 
 .quote {
@@ -82,8 +89,18 @@ a {
 }
 
 .quote mark {
-  background: #fef9c3;
+  background: #f4e8c6;
   color: inherit;
   padding: 0 1px;
-  border-radius: 2px;
+  border-radius: 1px;
+  box-shadow: inset 0 -1px 0 #d9bf7a;
+}
+
+/* Small uppercase labels for panel titles and trust layers. */
+.label-caps {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
 }
