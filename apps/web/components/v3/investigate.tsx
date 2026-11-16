@@ -84,7 +84,7 @@ export function Investigate({ matterId }: { matterId: string }) {
             {submitting ? <Spinner /> : null} Investigate
           </Button>
         </div>
-        <div className="mt-2 flex flex-wrap gap-2 text-xs text-[var(--muted-foreground)]">
+        <div className="mt-2 flex flex-wrap gap-2 text-[12px] text-[var(--muted-foreground)]">
           Try:
           {EXAMPLES.map((example) => (
             <button key={example} type="button" className="underline-offset-2 hover:underline" onClick={() => setQuestion(example)}>
@@ -98,7 +98,7 @@ export function Investigate({ matterId }: { matterId: string }) {
       <div className="grid gap-6 lg:grid-cols-[260px_1fr]">
         <Panel title="Recent investigations" padded={false} className="self-start">
           {runs.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-[var(--muted-foreground)]">None yet.</p>
+            <p className="px-4 py-6 text-[13px] text-[var(--muted-foreground)]">None yet.</p>
           ) : (
             <ul className="divide-y divide-[var(--border)]">
               {runs.map((run) => (
@@ -106,10 +106,10 @@ export function Investigate({ matterId }: { matterId: string }) {
                   <button
                     type="button"
                     onClick={() => loadRun(run.id)}
-                    className={`w-full px-4 py-2.5 text-left hover:bg-[var(--subtle)] ${selected?.id === run.id ? "bg-[var(--subtle)]" : ""}`}
+                    className={`w-full border-l-2 px-4 py-2.5 text-left hover:bg-[var(--subtle)] ${selected?.id === run.id ? "border-[var(--primary)] bg-[var(--subtle)]" : "border-transparent"}`}
                   >
-                    <p className="line-clamp-2 text-sm">{run.question}</p>
-                    <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                    <p className="line-clamp-2 text-[13px]">{run.question}</p>
+                    <p className="mt-0.5 text-[12px] text-[var(--muted-foreground)]">
                       {run.status.toLowerCase()} · {timeAgo(run.created_at)}
                     </p>
                   </button>
@@ -132,8 +132,8 @@ function RunView({ matterId, run }: { matterId: string; run: Run }) {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-base font-semibold">{run.question}</h2>
-        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-[var(--muted-foreground)]">
+        <h2 className="font-serif text-[20px] leading-snug font-normal">{run.question}</h2>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[12px] text-[var(--muted-foreground)]">
           <RunStatus run={run} />
           <span>Model: {run.model?.provider_kind === "mock" ? "deterministic mock" : `${run.model?.model} (${run.model?.provider_kind})`}</span>
           <span>· Retrieval: {run.retrieval_profile}</span>
@@ -162,8 +162,8 @@ function RunView({ matterId, run }: { matterId: string; run: Run }) {
             {run.claims.map((claim) => (
               <li key={claim.id}>
                 <Link href={`/matters/${matterId}/claims/${claim.id}` as never} className="block px-4 py-3 hover:bg-[var(--subtle)]">
-                  <p className="text-sm font-medium">{claim.text}</p>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  <p className="text-[13px] font-medium">{claim.text}</p>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
                     <GateBadge state={claim.source_gate_state} />
                     <CandidateBadge candidate={claim.relation_candidate} />
                     <ReviewBadge state={claim.review_state} stale={claim.basis_state !== "CURRENT"} />
@@ -176,7 +176,7 @@ function RunView({ matterId, run }: { matterId: string; run: Run }) {
         </Panel>
       ) : null}
       {!working && run.status === "COMPLETED" ? (
-        <p className="text-xs text-[var(--muted-foreground)]">
+        <p className="text-[12px] text-[var(--muted-foreground)]">
           Searched {coverage.snapshot_spans ?? "?"} passages in the pinned snapshot; {coverage.primary_candidates ?? "?"} were offered to the model. Retrieval is not exhaustive.
         </p>
       ) : null}
